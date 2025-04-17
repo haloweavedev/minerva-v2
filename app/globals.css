@@ -1,26 +1,117 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Light theme variables */
+  --background: 0 0% 100%; /* White */
+  --foreground: 240 10% 3.9%; /* Dark Gray/Black */
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 235 23% 63%; /* #7F85C1 */
+  --primary-foreground: 0 0% 100%; /* White */
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 235 23% 63%; /* #7F85C1 */
+  --radius: 0.5rem;
+
+  /* Font Variables */
+  --font-geist: Geist, sans-serif;
+  --font-geist-mono: "Geist Mono", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark Theme Variable Overrides - outside of @theme */
+:is(.dark) {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 235 23% 63%; /* #7F85C1 */
+  --primary-foreground: 0 0% 100%; /* White */
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 235 23% 63%; /* #7F85C1 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base Styles */
+* {
+  border-color: hsl(var(--border));
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-geist);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply mono font to code/pre tags */
+code, pre {
+  font-family: var(--font-geist-mono);
+}
+
+/* Define border radius using the variable */
+:root { /* Apply globally */
+    border-radius: var(--radius);
+}
+/* Or apply more specifically if needed */
+.rounded-lg { border-radius: var(--radius); }
+.rounded-md { border-radius: calc(var(--radius) - 2px); }
+.rounded-sm { border-radius: calc(var(--radius) - 4px); }
+
+/* Keep utilities layer */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Add other custom utilities if needed */
+}
+
+/* Keep components layer for potential custom component styles */
+@layer components {
+   /* Example: Ensure prose styles work well */
+  .prose {
+    color: hsl(var(--foreground));
+  }
+  .prose p {
+     line-height: 1.625; /* Or use Tailwind class like leading-relaxed */
+     margin-top: 0.5em;
+     margin-bottom: 0.5em;
+  }
+   .prose pre {
+     padding: 0; /* Reset padding often added by typography plugin */
+   }
+   .prose code:not(pre code) { /* Inline code styling */
+      @apply text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1 rounded-md font-mono;
+   }
+   .prose pre code { /* Code within pre blocks */
+      @apply whitespace-pre-wrap break-words bg-transparent p-0 border-none rounded-none;
+   }
+   .prose a {
+      color: hsl(var(--primary));
+      text-decoration: none;
+   }
+   .prose a:hover {
+      text-decoration: underline;
+   }
+   /* Add more prose styles as needed */
 }
