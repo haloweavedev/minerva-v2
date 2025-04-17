@@ -5,7 +5,6 @@ import {
   useEffect,
   useCallback,
   memo,
-  type FormEvent,
   type ChangeEvent,
 } from 'react';
 import { toast } from 'sonner';
@@ -28,14 +27,8 @@ function PureMultimodalInput({
   input: UseChatHelpers['input'];
   setInput: UseChatHelpers['setInput'];
   status: UseChatHelpers['status'];
-  stop: () => void;
-  handleSubmit: (
-    e: FormEvent<HTMLFormElement> | undefined,
-    options?: {
-      data?: Record<string, unknown>;
-      options?: Record<string, unknown>;
-    }
-  ) => void;
+  stop: UseChatHelpers['stop'];
+  handleSubmit: UseChatHelpers['handleSubmit'];
   className?: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);

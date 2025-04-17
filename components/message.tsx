@@ -7,8 +7,14 @@ import { cn } from '@/lib/utils';
 import { SparklesIcon } from './icons';
 import { Markdown } from './markdown';
 
+// Define props interface
+interface PurePreviewMessageProps {
+  message: UIMessage;
+  isLoading?: boolean;
+}
+
 // Simplified version without editing, voting, artifacts, reasoning
-const PurePreviewMessage = ({ message }: { message: UIMessage }) => {
+const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
   return (
     <AnimatePresence>
       <motion.div
@@ -42,16 +48,9 @@ const PurePreviewMessage = ({ message }: { message: UIMessage }) => {
                     <div
                       data-testid="message-content"
                       className={cn(
-                        'prose prose-p:leading-relaxed prose-pre:p-0 max-w-none transition-colors duration-200', // Base prose styles
-                        {
-                          // User message styles
-                          'dark:prose-invert': message.role === 'user', // Invert only for user messages
-                          'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground px-4 py-3 rounded-2xl rounded-br-sm shadow-sm':
-                            message.role === 'user',
-                          // Assistant message styles
-                          'bg-slate-50 text-foreground dark:bg-slate-900 dark:text-foreground border border-slate-200 dark:border-slate-800 px-4 py-3 rounded-2xl rounded-tl-sm shadow-[0_2px_4px_rgba(0,0,0,0.02)]': 
-                            message.role === 'assistant'
-                        }
+                        'prose prose-p:leading-relaxed prose-pre:p-0 max-w-none transition-colors duration-200 dark:prose-invert', // Base prose styles + always invert in dark mode
+                        // Apply user styles unconditionally
+                        'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground px-4 py-3 rounded-2xl rounded-br-sm shadow-sm'
                       )}
                     >
                       <Markdown>{part.text}</Markdown>
@@ -68,16 +67,9 @@ const PurePreviewMessage = ({ message }: { message: UIMessage }) => {
                  <div
                    data-testid="message-content"
                    className={cn(
-                     'prose prose-p:leading-relaxed prose-pre:p-0 max-w-none transition-colors duration-200', // Base prose styles
-                     {
-                       // User message styles
-                       'dark:prose-invert': message.role === 'user', // Invert only for user messages
-                       'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground px-4 py-3 rounded-2xl rounded-br-sm shadow-sm':
-                         message.role === 'user',
-                       // Assistant message styles
-                       'bg-slate-50 text-foreground dark:bg-slate-900 dark:text-foreground border border-slate-200 dark:border-slate-800 px-4 py-3 rounded-2xl rounded-tl-sm shadow-[0_2px_4px_rgba(0,0,0,0.02)]': 
-                         message.role === 'assistant'
-                     }
+                     'prose prose-p:leading-relaxed prose-pre:p-0 max-w-none transition-colors duration-200 dark:prose-invert', // Base prose styles + always invert in dark mode
+                     // Apply user styles unconditionally
+                     'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground px-4 py-3 rounded-2xl rounded-br-sm shadow-sm'
                    )}
                  >
                    <Markdown>{message.content}</Markdown>
