@@ -1,5 +1,5 @@
 // lib/ai/providers.ts
-import type { CoreTool, LanguageModelV1 } from 'ai';
+import type { LanguageModelV1 } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
@@ -34,7 +34,5 @@ const languageModel: LanguageModelV1 = (() => {
   );
 })();
 
-// Tools remain undefined for this simple version
-const providerTools: CoreTool[] | undefined = undefined;
-
-export { languageModel, providerTools }; 
+// Export just the language model as we're using tool directly in the route
+export { languageModel }; 

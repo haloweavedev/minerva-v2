@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Minerva - Romance Book Review Chatbot
+
+A RAG-powered chatbot for [All About Romance](https://allaboutromance.com/) website that provides intelligent, context-based responses about romance book reviews. Minerva uses Pinecone for vector storage, OpenAI Embeddings, and a fully customizable UI with Book Card components.
+
+## Features
+
+- **RAG Integration**: Retrieves relevant context from Pinecone vector database based on user queries
+- **Book Cards**: Displays formatted book recommendations with metadata (grade, sensuality, cover image, etc.)
+- **Multi-Provider Support**: Works with both OpenAI and Google Generative AI
+- **Responsive Design**: Fully mobile-responsive chat interface
+
+## Environment Setup
+
+Create a `.env.local` file with the following variables:
+
+```bash
+# Chat Provider ('openai' or 'google')
+AI_PROVIDER=openai # Or google
+
+# Keys for Chat Provider
+OPENAI_API_KEY=sk-...
+GOOGLE_GENERATIVE_AI_API_KEY=AIza...
+
+# Key for Embeddings (ALWAYS OpenAI for this setup)
+# OPENAI_API_KEY=sk-... # Already listed above
+
+# Pinecone Credentials
+PINECONE_API_KEY=YOUR_PINECONE_API_KEY
+PINECONE_INDEX_NAME=YOUR_PINECONE_INDEX_NAME # e.g., minerva
+# PINECONE_INDEX_HOST=YOUR_PINECONE_INDEX_HOST # If using host URL
+# PINECONE_ENVIRONMENT=YOUR_PINECONE_ENVIRONMENT # If using environment name
+
+# Models
+OPENAI_EMBEDDING_MODEL_ID=text-embedding-3-small
+# Optional: Override default chat models
+# OPENAI_MODEL_ID=gpt-4-turbo
+# GOOGLE_MODEL_ID=gemini-1.5-pro-latest
+```
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
+   ```bash
+   pnpm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. Run the development server:
+   ```bash
+   pnpm dev
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How It Works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **RAG Process**:
+   - User query is converted to an embedding using OpenAI's `text-embedding-3-small`
+   - Pinecone searches for semantically similar content in the book reviews
+   - Relevant context is retrieved and sent to the LLM along with the user query
 
-## Learn More
+2. **Book Card Display**:
+   - When the AI mentions specific books from the context, it calls the `displayBookCardsTool`
+   - The tool passes structured book metadata to the frontend
+   - Custom `<BookCard>` components render with book details, cover images, and links
 
-To learn more about Next.js, take a look at the following resources:
+## Customization
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **System Prompt**: Edit `lib/ai/prompts.ts` to modify AI behavior
+- **Book Card Schema**: Update `lib/ai/schemas.ts` to change the metadata structure
+- **UI Components**: Modify files in `/components` to customize the appearance
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Note on Vector Database
 
-## Deploy on Vercel
+This project assumes you already have a Pinecone index populated with romance book review content. The vector database should contain:
+- Book review text
+- Book metadata (title, author, grade, sensuality, etc.)
+- Review URLs and image links
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the LICENSE file for details.
