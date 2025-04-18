@@ -90,7 +90,7 @@ function PureMultimodalInput({
         value={input}
         onChange={handleInput}
         className={cn(
-          'min-h-[40px] max-h-[200px] overflow-y-auto resize-none rounded-2xl !text-base bg-background dark:bg-muted border border-input pr-14 pl-4 py-2',
+          'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700',
           className,
         )}
         rows={1}

@@ -28,11 +28,15 @@ export function BookCard({ book, className }: BookCardProps) {
       <div className="flex flex-wrap gap-1 text-xs mb-3"> {/* Reduced gap */}
         {book.grade && <span className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded">Grade: {book.grade}</span>}
         {book.sensuality && <span className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded">Sensuality: {book.sensuality}</span>}
-        {/* Limit displayed book types */}
-        {book.bookTypes?.slice(0, 2)?.map(type => (
-          <span key={type} className="bg-muted text-muted-foreground px-1.5 py-0.5 rounded truncate">{type}</span>
-        ))}
-        {book.bookTypes && book.bookTypes.length > 2 && <span className="text-muted-foreground">...</span>}
+        {/* Handle null/empty bookTypes array explicitly */}
+        {book.bookTypes && book.bookTypes.length > 0 ? (
+          <>
+            {book.bookTypes.slice(0, 2).map(type => (
+              <span key={type} className="bg-muted text-muted-foreground px-1.5 py-0.5 rounded truncate">{type}</span>
+            ))}
+            {book.bookTypes.length > 2 && <span className="text-muted-foreground">...</span>}
+          </>
+        ) : null}
       </div>
       <div className="flex flex-col sm:flex-row sm:justify-between gap-2 items-start mt-2"> {/* Flex col on small screens */}
          {book.asin && (

@@ -120,11 +120,12 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
                     <div
                       data-testid="message-content"
                       className={cn(
-                        'prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none', // Base prose styles + always invert in dark mode
+                        'prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none',
                         {
                           'bg-primary text-primary-foreground px-3 py-2 rounded-xl': message.role === 'user',
                           'px-3 py-2': message.role === 'assistant'
-                        }
+                        },
+                        message.role === 'user' && 'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700'
                       )}
                     >
                       <Markdown>{part.text}</Markdown>
@@ -264,7 +265,7 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
             )}
             
             {/* NEW: Render book cards directly from toolInvocations if available */}
-            {bookCards && bookCards()}
+            {bookCards?.()}
           </div>
         </div>
         
@@ -279,7 +280,7 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
                 <h3 className="font-bold text-green-600 dark:text-green-400">Tool Invocations: {message.toolInvocations.length}</h3>
                 <ul className="mt-1 list-disc pl-4">
                   {message.toolInvocations.map((tool, i) => (
-                    <li key={`tool-${tool.toolCallId || i}`} className="mb-2">
+                    <li key={`tool-${tool.toolCallId ?? i}`} className="mb-2">
                       <span className="font-semibold">{tool.toolName}</span>
                       <div className="text-xs mt-1 px-2 py-1 bg-gray-200 dark:bg-gray-900 rounded overflow-auto">
                         <pre>{JSON.stringify(tool.args, null, 2)}</pre>
