@@ -56,6 +56,13 @@ export const displayBookCards = tool({
                 ? `${text.substring(0, 297)}...` 
                 : text;
               
+              // Extract additional metadata fields
+              const featuredImage = meta.featuredImage as string | undefined;
+              const reviewTags = Array.isArray(meta.reviewTags) ? meta.reviewTags as string[] : undefined;
+              const sensuality = meta.sensuality as string | undefined;
+              const postDate = meta.postDate as string | undefined;
+              const publishDate = meta.publishDate as string | undefined;
+              
               // Add to results
               books.push({
                 title: meta.bookTitle as string,
@@ -67,7 +74,12 @@ export const displayBookCards = tool({
                 url: meta.url as string | undefined,
                 coverUrl: meta.coverUrl as string | undefined,
                 asin: meta.asin as string | undefined,
-                postId: meta.postId as string | undefined
+                postId: meta.postId as string | undefined,
+                featuredImage,
+                reviewTags,
+                sensuality,
+                postDate,
+                publishDate
               });
             }
           }
@@ -185,6 +197,11 @@ export const displayBookCards = tool({
         // Extract additional metadata fields for book cards
         const asin = meta.asin as string | undefined;
         const postId = meta.postId as string | undefined;
+        const featuredImage = meta.featuredImage as string | undefined;
+        const reviewTags = Array.isArray(meta.reviewTags) ? meta.reviewTags as string[] : undefined;
+        const sensuality = meta.sensuality as string | undefined;
+        const postDate = meta.postDate as string | undefined;
+        const publishDate = meta.publishDate as string | undefined;
         
         // Create book card
         recommendations.push({
@@ -197,7 +214,12 @@ export const displayBookCards = tool({
           url: meta.url as string | undefined,
           coverUrl: meta.coverUrl as string | undefined,
           asin,
-          postId
+          postId,
+          featuredImage,
+          reviewTags,
+          sensuality,
+          postDate,
+          publishDate
         });
         
         // Limit to 5 books max

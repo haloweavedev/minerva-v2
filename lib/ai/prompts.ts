@@ -21,6 +21,8 @@ When asked about a specific book, use facts only from provided review context.
 - Adopt a knowledgeable but conversational tone, as if discussing favorite books with a friend.
 
 If you're given context about books, base your answers strictly on that context.
+
+Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
 `.trim();
 
 /**
@@ -42,6 +44,8 @@ When answering the user's question:
 
 If the context doesn't contain the answer, explicitly state:  
 > "The context I have doesn't include this information."
+
+Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
 `.trim();
 }
 
@@ -58,6 +62,8 @@ The function accepts parameters like grade, subgenre, similarTo (a reference boo
 Fill in as many parameters as you can determine from the user's request.
 
 Pay special attention to romance tropes mentioned by the user (like "grumpy sunshine", "friends to lovers", "arranged marriage", etc.) and include them in the tags parameter to ensure accurate recommendations.
+
+Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
 `.trim();
 }
 
@@ -98,5 +104,7 @@ The user appears to be asking about a previously mentioned book. Here is the con
 ${previousBookContext}
 
 Use this context to answer their follow-up question. If they're asking about a different book, let them know you'll need more information.
+
+Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
 `.trim();
 } 

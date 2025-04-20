@@ -7,7 +7,7 @@ const openaiClient = new OpenAI({
 });
 
 // Constants
-const EMBEDDING_MODEL = 'text-embedding-ada-002'; // Updated to use the standard embedding model
+export const EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL_ID || 'text-embedding-3-small';
 const TOP_K = 5;
 const MIN_SCORE = 0.7; // Minimum similarity score threshold
 
@@ -58,9 +58,11 @@ function buildPineconeFilter(filters: Record<string, unknown>): Record<string, u
 
   // Handle subgenre/type filter
   if (filters.subgenre && typeof filters.subgenre === 'string') {
-    // Check in both bookTypes array and reviewTags
+    // Normalize to match stored "X Romance" values
+    const norm = filters.subgenre.charAt(0).toUpperCase() + filters.subgenre.slice(1);
+    const typeLabel = `${norm} Romance`;
     f.$or = [
-      { bookTypes: { $in: [filters.subgenre] } },
+      { bookTypes: { $in: [typeLabel] } },
       { reviewTags: { $in: [filters.subgenre] } }
     ];
   }
@@ -227,6 +229,7 @@ export async function getContext(
         contextEntry += ` – ${meta.text}`;
         
         contextEntries.push(contextEntry);
+        seenBooks.add(meta.bookTitle as string);
         console.log(`[getContext] Added fallback match with score: ${fallback.score}`);
       }
     }

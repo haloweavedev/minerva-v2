@@ -34,5 +34,28 @@ const languageModel: LanguageModelV1 = (() => {
   );
 })();
 
-// Export just the language model as we're using tool directly in the route
-export { languageModel }; 
+// Create embedding model using same provider but different model ID
+const embeddingModel = (() => {
+  if (providerName === 'openai') {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY environment variable is not set.');
+    }
+    const openai = createOpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    // Use environment variable for embedding model
+    return openai(process.env.OPENAI_EMBEDDING_MODEL_ID || 'text-embedding-3-small');
+  }
+
+  // For now, fall back to OpenAI embeddings even when using Google for LLM
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY environment variable is required for embeddings.');
+  }
+  const openai = createOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  return openai(process.env.OPENAI_EMBEDDING_MODEL_ID || 'text-embedding-3-small');
+})();
+
+// Export both models
+export { languageModel, embeddingModel }; 

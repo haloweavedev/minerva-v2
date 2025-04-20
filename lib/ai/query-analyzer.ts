@@ -1,4 +1,9 @@
-import type { RecommendationQuery } from "./schemas";
+import OpenAI from 'openai';
+
+// Initialize OpenAI client for direct API access
+const openaiClient = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Query types
 export type QueryType = 
@@ -16,271 +21,63 @@ export interface QueryAnalysisResult {
 }
 
 /**
- * Detects if a query is asking for book recommendations
+ * Analyzes user query using LLM to extract intent and parameters
  */
-function isRecommendationQuery(query: string): boolean {
-  const lower = query.toLowerCase();
-  
-  // Check for explicit recommendation phrases
-  if (
-    /recommend|suggest|suggest.+book|recommendation|suggestions/i.test(lower) ||
-    /looking for|any (good|great)/i.test(lower) ||
-    /what are some/i.test(lower) ||
-    /similar to|like/i.test(lower) ||
-    /if i liked/i.test(lower) ||
-    /can you (find|list)/i.test(lower)
-  ) {
-    return true;
+export async function analyzeQuery(query: string): Promise<QueryAnalysisResult> {
+  try {
+    console.log(`[QueryAnalyzer] Analyzing query: "${query}"`);
+    
+    const response = await openaiClient.chat.completions.create({
+      model: process.env.OPENAI_MODEL_ID || 'gpt-4-turbo',
+      messages: [
+        { 
+          role: 'system', 
+          content: `You are a JSON extractor for a romance book chatbot. 
+Given the user query, analyze it and return a JSON object with the following structure:
+{
+  "type": one of "recommendation", "book_info", "author_info", "comparison", "general", "follow_up",
+  "filters": {
+    // For recommendations
+    "grade": optional letter grade filter like "A+" or "B",
+    "subgenre": optional subgenre like "medieval", "regency", "contemporary",
+    "similarTo": optional title of a book the user likes,
+    "tags": optional array of tropes or themes like ["arranged marriage", "enemies to lovers"],
+    "keywords": optional general search terms,
+    
+    // For book_info
+    "title": optional specific book title,
+    "titles": optional array of book titles (for comparison queries),
+    
+    // For author_info
+    "author": optional author name
   }
-  
-  // Check for genre/rating requests that imply recommendations
-  if (
-    (/[A-F][\+\-]?/.test(lower) || /grade/.test(lower)) && 
-    (/romance\b/.test(lower) || /best|good|top|great/.test(lower))
-  ) {
-    return true;
-  }
-  
-  // Check for multiple book requests
-  if (
-    /books about|books with|books that/i.test(lower) ||
-    /list of|books\s+for/i.test(lower)
-  ) {
-    return true;
-  }
-  
-  return false;
 }
 
-/**
- * Detects if query is about a specific book
- */
-function isBookInfoQuery(query: string): boolean {
-  const lower = query.toLowerCase();
-  
-  // Check for title/author patterns
-  if (
-    lower.includes(' by ') || // e.g. "Velvet Bond by Catherine Archer"
-    /^(what|who|when|tell me about)/i.test(lower) ||
-    /information about|summary of|review of|plot of/i.test(lower)
-  ) {
-    return true;
-  }
-  
-  // Check if the query seems to be a specific title (capitalized words)
-  if (
-    /^[A-Z][\w\s\']+$/.test(query) && // Title-like format
-    !/recommend|suggest/.test(lower) // Not asking for recommendation
-  ) {
-    return true;
-  }
-  
-  return false;
-}
+Examples:
+1. "Recommend me some medieval romance books" → {"type":"recommendation","filters":{"subgenre":"medieval"}}
+2. "Tell me about The Velvet Bond by Catherine Archer" → {"type":"book_info","filters":{"title":"The Velvet Bond","author":"Catherine Archer"}}
+3. "Compare Pride and Prejudice with Persuasion" → {"type":"comparison","filters":{"titles":["Pride and Prejudice","Persuasion"]}}
+4. "Are there any good enemies to lovers romances?" → {"type":"recommendation","filters":{"tags":["enemies to lovers"]}}` 
+        },
+        { role: 'user', content: query }
+      ],
+      temperature: 0.1, // Low temperature for deterministic output
+      response_format: { type: "json_object" }
+    });
 
-/**
- * Detects if query is asking to compare books
- */
-function isComparisonQuery(query: string): boolean {
-  return /\b(compare|difference|better than|versus|vs\.?)\b/i.test(query);
-}
-
-/**
- * Extracts book title from query where possible
- */
-function extractBookTitle(query: string): string | undefined {
-  // First clean up common filler phrases
-  const cleaned = query.replace(/(can you tell me|what is|about|please|who is)/gi, ' ')
-    .replace(/(the book|novel|story|titled|called)\s+/gi, ' ')
-    .trim();
-
-  // Look for "Title by Author" pattern from anywhere in the string
-  const byMatch = cleaned.match(/["']?([^"']+?)["']?\s+by\s+([^\?\.]+)/i);
-  if (byMatch?.[1]) {
-    return byMatch[1].trim();
-  }
-  
-  // Look for "info about Title" pattern
-  const aboutMatch = query.match(/(?:about|on|for)\s+["']?([^"'?]+)["']?/i);
-  if (aboutMatch?.[1]) {
-    // Clean up the "the book" phrase from this match as well
-    return aboutMatch[1].replace(/(the book|novel|story|titled|called)\s+/gi, '').trim();
-  }
-  
-  return undefined;
-}
-
-/**
- * Extracts author from query where possible
- */
-function extractAuthor(query: string): string | undefined {
-  const cleaned = query.replace(/(can you tell me|what is|about|please|who is)/gi, '').trim();
-
-  // Look for "Title by Author" pattern from anywhere in the string
-  const byMatch = cleaned.match(/["']?(.+?)["']?\s+by\s+([^\?\.]+)/i);
-  if (byMatch?.[2]) {
-    return byMatch[2].trim();
-  }
-  
-  return undefined;
-}
-
-/**
- * Extracts grade from query where possible
- */
-function extractGrade(query: string): string | undefined {
-  // Look for letter grades like "A+", "B-"
-  const gradeMatch = query.match(/\b([A-F][\+\-]?)\b/i);
-  if (gradeMatch?.[1]) {
-    return gradeMatch[1].toUpperCase();
-  }
-  
-  return undefined;
-}
-
-/**
- * Extracts subgenre or setting from query
- */
-function extractSubgenre(query: string): string | undefined {
-  const lower = query.toLowerCase();
-  
-  // Common romance subgenres and settings to check for
-  const subgenres = [
-    'medieval', 'regency', 'victorian', 'contemporary', 
-    'historical', 'paranormal', 'suspense', 'western',
-    'fantasy', 'gothic', 'erotic', 'inspirational'
-  ];
-  
-  for (const subgenre of subgenres) {
-    if (lower.includes(subgenre)) {
-      return subgenre;
+    const content = response.choices[0]?.message.content;
+    if (!content) {
+      throw new Error("No content in response from language model");
     }
-  }
-  
-  return undefined;
-}
 
-// Extracts tags (heuristically)
-function extractTags(query: string): string[] {
-  const knownTags = [
-    "arranged marriage", 
-    "grumpy sunshine", 
-    "friends to lovers", 
-    "alpha hero", 
-    "age gap", 
-    "marriage of convenience",
-    "secret baby",
-    "enemies to lovers",
-    "forbidden romance",
-    "second chance",
-    "slow burn",
-    "fake relationship",
-    "workplace romance",
-    "forced proximity",
-    "small town",
-    "royal romance",
-    "bodyguard",
-    "soul mates",
-    "opposites attract",
-    "fated mates"
-  ];
-  const lower = query.toLowerCase();
-  return knownTags.filter(tag => lower.includes(tag));
-}
-
-/**
- * Extracts recommendation parameters from query
- */
-function extractRecommendationParams(query: string): RecommendationQuery {
-  const params: RecommendationQuery = {};
-  
-  // Extract similar book title (for "books like X" queries)
-  const similarMatches = query.match(/(?:like|similar to)\s+["']?([^"'?\.]+)["']?/i);
-  if (similarMatches?.[1]) {
-    params.similarTo = similarMatches[1].trim();
-  }
-  
-  // Extract grade
-  const grade = extractGrade(query);
-  if (grade) {
-    params.grade = grade;
-  }
-  
-  // Extract subgenre
-  const subgenre = extractSubgenre(query);
-  if (subgenre) {
-    params.subgenre = subgenre;
-  }
-  
-  // Extract review tags if possible
-  const tags = extractTags(query);
-  if (tags.length > 0) {
-    params.tags = tags;
-  }
-  
-  // Extract general keywords (anything that might be criteria)
-  // For simplicity, we're just taking the whole query after removing specific params
-  let keywords = query;
-  if (params.similarTo) {
-    keywords = keywords.replace(/(?:like|similar to)\s+["']?([^"'?\.]+)["']?/i, '');
-  }
-  if (params.grade) {
-    keywords = keywords.replace(/\b([A-F][\+\-]?)\b/i, '');
-  }
-  if (params.subgenre) {
-    keywords = keywords.replace(new RegExp(`\\b${params.subgenre}\\b`, 'i'), '');
-  }
-  
-  // Only add keywords if there's meaningful content left
-  keywords = keywords.trim().replace(/\s+/g, ' ');
-  if (keywords.length > 5 && !keywords.match(/^(recommend|suggest|find|get|tell me|what are).+$/i)) {
-    params.keywords = keywords;
-  }
-  
-  return params;
-}
-
-/**
- * Analyzes user query and returns query type and filters
- */
-export function analyzeQuery(query: string): QueryAnalysisResult {
-  const filters: Record<string, unknown> = {};
-  
-  // Step 1: Determine query type
-  let type: QueryType = 'general';
-  
-  if (isRecommendationQuery(query)) {
-    type = 'recommendation';
+    // Parse the JSON response
+    const result = JSON.parse(content) as QueryAnalysisResult;
+    console.log('[QueryAnalyzer] Analysis Result:', JSON.stringify(result, null, 2));
     
-    // For recommendation queries, extract structured parameters
-    const params = extractRecommendationParams(query);
-    if (params.grade) filters.grade = params.grade;
-    if (params.subgenre) filters.subgenre = params.subgenre;
-    if (params.similarTo) filters.title = params.similarTo;
-    if (params.keywords) filters.keywords = params.keywords;
-    if (params.tags) filters.tags = params.tags;
-    
-  } else if (isComparisonQuery(query)) {
-    type = 'comparison';
-    const titleMatches = query.match(/"([^"]+)"|'([^']+)'|'([^']+)'|"([^"]+)"|([A-Z][\w\s]+)\s+(vs\.?|versus|compared to|and)\s+([A-Z][\w\s]+)/i);
-    if (titleMatches) {
-      filters.titles = [titleMatches[1] || titleMatches[5], titleMatches[7]].filter(Boolean);
-    }
-  } else if (isBookInfoQuery(query)) {
-    type = 'book_info';
-    
-    // For book info queries, extract title and author
-    const title = extractBookTitle(query);
-    if (title) filters.title = title;
-    
-    const author = extractAuthor(query);
-    if (author) filters.author = author;
-  } else {
-    // Could be follow-up or general query
-    if (query.length < 20 && /\b(it|this|that|they|them|those|he|she|the book)\b/i.test(query)) {
-      type = 'follow_up';
-    }
+    return result;
+  } catch (error) {
+    console.error('[QueryAnalyzer] Error:', error);
+    // Return a general query type on error
+    return { type: 'general', filters: {} };
   }
-  
-  return { type, filters };
 } 

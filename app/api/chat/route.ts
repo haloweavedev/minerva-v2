@@ -1,13 +1,10 @@
 import { streamText, type Message, type CoreMessage } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { languageModel } from '@/lib/ai/providers';
 import { baseSystemPrompt, systemPromptWithContext, recommendationPrompt, followUpPrompt, comparisonPrompt } from '@/lib/ai/prompts';
 import { displayBookCards } from '@/lib/ai/tools/display-book-cards';
 import { generateUUID } from '@/lib/utils';
 import { analyzeQuery } from '@/lib/ai/query-analyzer';
 import { getContext } from '@/utils/getContext';
-
-// Select the model to use
-const MODEL = 'gpt-4.1-nano-2025-04-14';
 
 // Used to store context between turns for follow-up questions
 // In a production app, consider using a more persistent store
@@ -60,7 +57,7 @@ export async function POST(req: Request) {
     const chatId = lastUserMessage.id.split('-')[0] || generateUUID();
 
     // Analyze the query to determine type and extract filters
-    const { type, filters } = analyzeQuery(userQuery);
+    const { type, filters } = await analyzeQuery(userQuery);
     console.log(`[API] Query Analysis - Type: ${type}, Filters:`, filters);
 
     // Prepare messages for the model
@@ -141,9 +138,9 @@ export async function POST(req: Request) {
       console.log(`[API] System Prompt Snippet: ${promptMessages[0].content.substring(0, snippetLength)}...`);
     }
 
-    // Call OpenAI with streaming and tool support
+    // Call language model with streaming and tool support
     const result = await streamText({
-      model: openai(MODEL),
+      model: languageModel,
       messages: promptMessages,
       tools: { displayBookCards },
       temperature: 0.7,

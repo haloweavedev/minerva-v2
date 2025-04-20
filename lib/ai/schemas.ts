@@ -11,7 +11,13 @@ export const BookSchema = z.object({
   url: z.string().url().optional().describe("The direct URL to the AAR review page."),
   coverUrl: z.string().url().optional().describe("URL to the book's cover image, if available."),
   asin: z.string().optional().describe("Amazon Standard Identification Number for the book."),
-  postId: z.string().optional().describe("The WordPress post ID for the review.")
+  postId: z.string().optional().describe("The WordPress post ID for the review."),
+  featuredImage: z.string().url().optional().nullable().or(z.literal('')).transform(v => v || null)
+    .describe("URL to a featured image for the book (empty or null if unavailable)."),
+  reviewTags: z.array(z.string()).optional().describe("Tags from the review content."),
+  sensuality: z.string().optional().describe("Sensuality rating from the review."),
+  postDate: z.string().optional().describe("Date when the review was posted."),
+  publishDate: z.string().optional().describe("Date when the book was published.")
 });
 
 // Schema for an array of book cards
