@@ -104,6 +104,27 @@ export async function POST(req: Request) {
         console.log(`[API] Using cached context for follow-up question about: ${cachedContext.title || 'previous topic'}`);
       }
       
+    } else if (type === 'book_info') {
+      // 1. Retrieve context
+      contextUsed = await getContext(userQuery, filters);
+
+      // 2. Build prompt messages
+      promptMessages = [
+        { role: 'system', content: systemPromptWithContext(contextUsed) },
+        ...coreUserAssistantMessages.filter(m => m.role !== 'system')
+      ];
+      console.log('[API] For book_info, allowing model to call displayBookCards');
+
+      // 3. Stream the response, letting the model call the tool
+      const result = await streamText({
+        model: languageModel,
+        messages: promptMessages,
+        tools: { displayBookCards }, 
+        temperature: 0.7,
+        maxTokens: 1024,
+        maxSteps: 2 // Allow text generation + tool call
+      });
+      return result.toDataStreamResponse();
     } else {
       // For book info or general queries, retrieve relevant context
       contextUsed = await getContext(userQuery, filters);

@@ -23,6 +23,7 @@ When asked about a specific book, use facts only from provided review context.
 If you're given context about books, base your answers strictly on that context.
 
 Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
+- For a specific-book query, after your factual summary use the displayBookCards tool with \`specificTitles: [<that title>]\` so the UI renders the card.
 `.trim();
 
 /**

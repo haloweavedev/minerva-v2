@@ -95,7 +95,10 @@ export const displayBookCards = tool({
     }
     
     // Continue with normal recommendation logic
-    // Build a query string for embedding
+    // Build Pinecone filter
+    const filter: Record<string, unknown> = {};
+    if (grade) filter.grade = { $eq: grade };
+
     let searchQuery = '';
     if (similarTo) {
       searchQuery = `books similar to ${similarTo}`;
@@ -117,124 +120,87 @@ export const displayBookCards = tool({
     
     console.log(`[Tool Execute: displayBookCards] Search query: "${searchQuery}"`);
     
-    try {
-      // Get embedding for the search query
-      const vector = await embedText(searchQuery);
+    if (similarTo) {
+      // Exclude the reference book from results
+      filter.bookTitle = { $ne: similarTo };
+    }
+    
+    // Query Pinecone for recommendations
+    const pineconeResponse = await queryPinecone({
+      vector: await embedText(searchQuery),
+      filter: Object.keys(filter).length > 0 ? filter : undefined,
+      topK: 10, // Request more to account for filtering
+      namespace: BOOK_REVIEW_NAMESPACE
+    });
+    
+    // Process results into structured book info
+    const seenTitles = new Set<string>();
+    const recommendations = [];
+    
+    for (const match of pineconeResponse.matches || []) {
+      const meta = match.metadata as Record<string, unknown> | undefined;
+      if (!meta || !meta.bookTitle || typeof meta.bookTitle !== 'string') continue;
       
-      // Build Pinecone filter
-      const filter: Record<string, unknown> = {};
-      if (grade) filter.grade = { $eq: grade };
-
-      // Initialize the $or array if needed for multiple conditions
-      const orConditions = [];
+      const title = meta.bookTitle as string;
       
-      if (subgenre) {
-        // Check in both bookTypes array and reviewTags
-        orConditions.push(
-          { bookTypes: { $in: [subgenre] } },
-          { reviewTags: { $in: [subgenre] } }
-        );
-      }
+      // Skip duplicates
+      if (seenTitles.has(title)) continue;
+      seenTitles.add(title);
       
-      // Add tag filtering if provided
-      if (tags && tags.length > 0) {
-        // Check in reviewTags array for any of the specified tags
-        orConditions.push(
-          { reviewTags: { $in: tags } }
-        );
-      }
+      // Extract other metadata
+      const author = meta.authorName as string || "Unknown Author";
+      const grade = meta.grade as string | undefined;
+      const bookType = Array.isArray(meta.bookTypes) && meta.bookTypes.length > 0 
+        ? meta.bookTypes[0] as string 
+        : undefined;
       
-      // If we have OR conditions, add them to the filter
-      if (orConditions.length > 0) {
-        filter.$or = orConditions;
-      }
+      // Extract tags if available
+      const tags = Array.isArray(meta.reviewTags) 
+        ? meta.reviewTags as string[] 
+        : [];
       
-      if (similarTo) {
-        // Exclude the reference book from results
-        filter.bookTitle = { $ne: similarTo };
-      }
+      // Generate a summary from the text
+      const text = meta.text as string || "";
+      const summary = text.length > 300 
+        ? `${text.substring(0, 297)}...` 
+        : text;
       
-      // Query Pinecone for recommendations
-      const pineconeResponse = await queryPinecone({
-        vector,
-        filter: Object.keys(filter).length > 0 ? filter : undefined,
-        topK: 10, // Request more to account for filtering
-        namespace: BOOK_REVIEW_NAMESPACE
+      // Extract additional metadata fields for book cards
+      const asin = meta.asin as string | undefined;
+      const postId = meta.postId as string | undefined;
+      const featuredImage = meta.featuredImage as string | undefined;
+      const reviewTags = Array.isArray(meta.reviewTags) ? meta.reviewTags as string[] : undefined;
+      const sensuality = meta.sensuality as string | undefined;
+      const postDate = meta.postDate as string | undefined;
+      const publishDate = meta.publishDate as string | undefined;
+      
+      // Create book card
+      recommendations.push({
+        title,
+        author,
+        grade,
+        summary,
+        tags,
+        bookType,
+        url: meta.url as string | undefined,
+        coverUrl: meta.coverUrl as string | undefined,
+        asin,
+        postId,
+        featuredImage,
+        reviewTags,
+        sensuality,
+        postDate,
+        publishDate
       });
       
-      // Process results into structured book info
-      const seenTitles = new Set<string>();
-      const recommendations = [];
-      
-      for (const match of pineconeResponse.matches || []) {
-        const meta = match.metadata as Record<string, unknown> | undefined;
-        if (!meta || !meta.bookTitle || typeof meta.bookTitle !== 'string') continue;
-        
-        const title = meta.bookTitle as string;
-        
-        // Skip duplicates
-        if (seenTitles.has(title)) continue;
-        seenTitles.add(title);
-        
-        // Extract other metadata
-        const author = meta.authorName as string || "Unknown Author";
-        const grade = meta.grade as string | undefined;
-        const bookType = Array.isArray(meta.bookTypes) && meta.bookTypes.length > 0 
-          ? meta.bookTypes[0] as string 
-          : undefined;
-        
-        // Extract tags if available
-        const tags = Array.isArray(meta.reviewTags) 
-          ? meta.reviewTags as string[] 
-          : [];
-        
-        // Generate a summary from the text
-        const text = meta.text as string || "";
-        const summary = text.length > 300 
-          ? `${text.substring(0, 297)}...` 
-          : text;
-        
-        // Extract additional metadata fields for book cards
-        const asin = meta.asin as string | undefined;
-        const postId = meta.postId as string | undefined;
-        const featuredImage = meta.featuredImage as string | undefined;
-        const reviewTags = Array.isArray(meta.reviewTags) ? meta.reviewTags as string[] : undefined;
-        const sensuality = meta.sensuality as string | undefined;
-        const postDate = meta.postDate as string | undefined;
-        const publishDate = meta.publishDate as string | undefined;
-        
-        // Create book card
-        recommendations.push({
-          title,
-          author,
-          grade,
-          summary,
-          tags,
-          bookType,
-          url: meta.url as string | undefined,
-          coverUrl: meta.coverUrl as string | undefined,
-          asin,
-          postId,
-          featuredImage,
-          reviewTags,
-          sensuality,
-          postDate,
-          publishDate
-        });
-        
-        // Limit to 5 books max
-        if (recommendations.length >= 5) break;
-      }
-      
-      console.log(`[Tool Execute: displayBookCards] Found ${recommendations.length} book recommendations`);
-      
-      // Validate against schema before returning
-      return BookListSchema.parse(recommendations);
-    } catch (error) {
-      console.error('[Tool Execute: displayBookCards] Error:', error);
-      // Return empty array on error
-      return [];
+      // Limit to 5 books max
+      if (recommendations.length >= 5) break;
     }
+    
+    console.log(`[Tool Execute: displayBookCards] Found ${recommendations.length} book recommendations`);
+    
+    // Validate against schema before returning
+    return BookListSchema.parse(recommendations);
   }
 });
 

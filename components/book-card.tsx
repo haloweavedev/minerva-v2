@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Book } from '@/lib/ai/schemas';
 import { cn } from '@/lib/utils';
 
@@ -10,9 +11,19 @@ interface BookCardProps {
 }
 
 export function BookCard({ book, className }: BookCardProps) {
+  const src = book.featuredImage || '/placeholder-cover.jpg';
+
   return (
     <div className={cn("border rounded-lg p-4 bg-card text-card-foreground shadow-sm max-w-xs w-full flex flex-col", className)}>
       <div className="flex-grow">
+        <div className="mb-3 flex justify-center relative w-[150px] h-[230px] mx-auto">
+          <Image 
+            src={src} 
+            alt={`Cover of ${book.title}`} 
+            fill
+            className="rounded-md object-cover" 
+          />
+        </div>
         <h3 className="font-semibold text-base mb-1 truncate" title={book.title}>{book.title}</h3>
         <p className="text-sm text-muted-foreground mb-2 truncate">by {book.author}</p>
 
