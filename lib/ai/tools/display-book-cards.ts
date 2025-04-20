@@ -97,8 +97,13 @@ export const displayBookCards = tool({
     // Continue with normal recommendation logic
     // Build Pinecone filter
     const filter: Record<string, unknown> = {};
-    if (grade) filter.grade = { $eq: grade };
+    
+    // 1. Grade‐only hard filter
+    if (grade) {
+      filter.grade = { $eq: grade };
+    }
 
+    // 2. Build a semantic search query
     let searchQuery = '';
     if (similarTo) {
       searchQuery = `books similar to ${similarTo}`;
@@ -115,19 +120,20 @@ export const displayBookCards = tool({
       searchQuery = `top rated ${grade} romance books`;
     }
     if (!searchQuery) {
-      searchQuery = 'romance books'; // fallback generic query
+      searchQuery = 'romance books';
     }
     
     console.log(`[Tool Execute: displayBookCards] Search query: "${searchQuery}"`);
     
+    // 3. Exclude the reference book if needed
     if (similarTo) {
-      // Exclude the reference book from results
       filter.bookTitle = { $ne: similarTo };
     }
     
-    // Query Pinecone for recommendations
+    // 4. Embed & query
+    const vector = await embedText(searchQuery);
     const pineconeResponse = await queryPinecone({
-      vector: await embedText(searchQuery),
+      vector,
       filter: Object.keys(filter).length > 0 ? filter : undefined,
       topK: 10, // Request more to account for filtering
       namespace: BOOK_REVIEW_NAMESPACE

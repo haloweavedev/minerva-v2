@@ -24,6 +24,8 @@ If you're given context about books, base your answers strictly on that context.
 
 Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
 - For a specific-book query, after your factual summary use the displayBookCards tool with \`specificTitles: [<that title>]\` so the UI renders the card.
+
+After your text response, ALWAYS call the displayBookCards tool with any relevant book metadata so the UI renders BookCard components.
 `.trim();
 
 /**
@@ -47,6 +49,8 @@ If the context doesn't contain the answer, explicitly state:
 > "The context I have doesn't include this information."
 
 Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
+
+After your text response, ALWAYS call the displayBookCards tool with any relevant book metadata so the UI renders BookCard components.
 `.trim();
 }
 
@@ -65,6 +69,8 @@ Fill in as many parameters as you can determine from the user's request.
 Pay special attention to romance tropes mentioned by the user (like "grumpy sunshine", "friends to lovers", "arranged marriage", etc.) and include them in the tags parameter to ensure accurate recommendations.
 
 Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
+
+After your text response, ALWAYS call the displayBookCards tool with any relevant book metadata so the UI renders BookCard components.
 `.trim();
 }
 
@@ -89,6 +95,8 @@ Finish with a friendly, subjective comparison based on tone, tension, or reader 
 Then render <BookCard> components for both books.
 
 IMPORTANT: After providing your comparison, you MUST call the displayBookCards function for BOTH books to render their cards.
+
+After your text response, ALWAYS call the displayBookCards tool with any relevant book metadata so the UI renders BookCard components.
 `.trim();
 }
 
@@ -107,5 +115,7 @@ ${previousBookContext}
 Use this context to answer their follow-up question. If they're asking about a different book, let them know you'll need more information.
 
 Then call the displayBookCards tool with any extracted book metadata, so the UI will render <BookCard> components.
+
+After your text response, ALWAYS call the displayBookCards tool with any relevant book metadata so the UI renders BookCard components.
 `.trim();
 } 

@@ -105,17 +105,17 @@ export async function POST(req: Request) {
       }
       
     } else if (type === 'book_info') {
-      // 1. Retrieve context
+      // 1. Retrieve context for the specific book
       contextUsed = await getContext(userQuery, filters);
-
+      
       // 2. Build prompt messages
       promptMessages = [
         { role: 'system', content: systemPromptWithContext(contextUsed) },
-        ...coreUserAssistantMessages.filter(m => m.role !== 'system')
+        ...coreUserAssistantMessages.filter(msg => msg.role !== 'system')
       ];
-      console.log('[API] For book_info, allowing model to call displayBookCards');
+      console.log('[API] For book_info, forcing model to show BookCard');
 
-      // 3. Stream the response, letting the model call the tool
+      // 3. Stream the response with tool support
       const result = await streamText({
         model: languageModel,
         messages: promptMessages,

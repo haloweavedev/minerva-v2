@@ -56,16 +56,7 @@ function buildPineconeFilter(filters: Record<string, unknown>): Record<string, u
     f.grade = { $eq: filters.grade };
   }
 
-  // Handle subgenre/type filter
-  if (filters.subgenre && typeof filters.subgenre === 'string') {
-    // Normalize to match stored "X Romance" values
-    const norm = filters.subgenre.charAt(0).toUpperCase() + filters.subgenre.slice(1);
-    const typeLabel = `${norm} Romance`;
-    f.$or = [
-      { bookTypes: { $in: [typeLabel] } },
-      { reviewTags: { $in: [filters.subgenre] } }
-    ];
-  }
+  // We no longer use hardcoded subgenre mappings - rely on vector similarity instead
 
   // Return undefined if no filters were added
   return Object.keys(f).length > 0 ? f : undefined;
