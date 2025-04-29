@@ -50,6 +50,8 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        'blob-purple': '#7F85C1',
+        'blob-pink': '#FF66C4',
       },
       borderRadius: {
         lg: 'var(--radius)',

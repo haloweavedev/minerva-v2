@@ -73,9 +73,9 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
                         'prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none',
                         {
                           'bg-primary text-primary-foreground px-3 py-2 rounded-xl': message.role === 'user',
-                          'px-3 py-2': message.role === 'assistant'
+                          'assistant-message-class': message.role === 'assistant'
                         },
-                        message.role === 'user' && 'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700'
+                        message.role === 'user' && 'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-5 dark:border-zinc-700'
                       )}
                     >
                       <Markdown>{part.text}</Markdown>

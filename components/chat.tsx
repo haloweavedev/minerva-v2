@@ -30,24 +30,25 @@ export function Chat() {
   });
 
   return (
-    <div className="flex flex-col h-dvh bg-background">
-      {/* Removed ChatHeader */}
-      <Messages
-        status={status}
-        messages={messages}
-        // Removed props: chatId, votes, setMessages, reload, isReadonly, isArtifactVisible
-      />
-
-      <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
-        <MultimodalInput
-          input={input}
-          setInput={setInput}
-          handleSubmit={handleSubmit}
+    <div className="flex flex-col h-full bg-transparent">
+      <div className="flex-1 overflow-hidden">
+        <Messages
           status={status}
-          stop={stop}
-          // Removed props: chatId, attachments, setAttachments, messages, setMessages, append
+          messages={messages}
         />
-      </form>
+      </div>
+
+      <div className="mt-auto pt-2">
+        <div className="mx-auto px-5 py-3 w-full">
+          <MultimodalInput
+            input={input}
+            setInput={setInput}
+            handleSubmit={handleSubmit}
+            status={status}
+            stop={stop}
+          />
+        </div>
+      </div>
     </div>
   );
 } 

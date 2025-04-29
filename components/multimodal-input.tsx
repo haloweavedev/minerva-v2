@@ -81,48 +81,49 @@ function PureMultimodalInput({
   }, [handleSubmit, input, setInput, setLocalStorageInput, resetHeight]);
 
   return (
-    <div className="relative w-full flex flex-col gap-4">
-      {/* Removed SuggestedActions and Attachment Previews */}
-      <Textarea
-        data-testid="multimodal-input"
-        ref={textareaRef}
-        placeholder="Send a message..."
-        value={input}
-        onChange={handleInput}
-        className={cn(
-          'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700',
-          className,
-        )}
-        rows={1}
-        onKeyDown={(event) => {
-          if (
-            event.key === 'Enter' &&
-            !event.shiftKey &&
-            !event.nativeEvent.isComposing
-          ) {
-            event.preventDefault();
-            if (status === 'streaming') {
-              toast.error('Please wait for the model to finish its response!');
-            } else {
-              submitForm();
+    <form onSubmit={(e) => { e.preventDefault(); submitForm(); }} className="w-full">
+      <div className="relative w-full flex flex-col">
+        <Textarea
+          data-testid="multimodal-input"
+          ref={textareaRef}
+          placeholder="Send a message..."
+          value={input}
+          onChange={handleInput}
+          className={cn(
+            'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 w-full',
+            'border-blob-purple focus-visible:border-blob-purple focus-visible:ring-blob-purple/30',
+            'shadow-[0_0_10px_rgba(127,133,193,0.1)] backdrop-blur-sm bg-white/30 dark:bg-white/5',
+            className,
+          )}
+          rows={1}
+          onKeyDown={(event) => {
+            if (
+              event.key === 'Enter' &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
+              if (status === 'streaming') {
+                toast.error('Please wait for the model to finish its response!');
+              } else {
+                submitForm();
+              }
             }
-          }
-        }}
-      />
+          }}
+        />
 
-      {/* Removed Attachments Button */}
-
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
-        {status === 'streaming' ? (
-          <StopButton stop={stop} />
-        ) : (
-          <SendButton
-            input={input}
-            submitForm={submitForm}
-          />
-        )}
+        <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+          {status === 'streaming' ? (
+            <StopButton stop={stop} />
+          ) : (
+            <SendButton
+              input={input}
+              submitForm={submitForm}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </form>
   );
 }
 
@@ -143,7 +144,7 @@ function PureStopButton({ stop }: { stop: () => void }) {
       data-testid="stop-button"
       variant="outline"
       size="icon"
-      className="rounded-full p-1.5 h-8 w-8 border dark:border-zinc-600"
+      className="rounded-full p-1.5 h-8 w-8 border border-blob-purple backdrop-blur-sm bg-white/30 dark:bg-white/5 text-blob-purple dark:text-blob-purple hover:bg-blob-purple/10"
       onClick={(event) => {
         event.preventDefault();
         stop();
@@ -169,7 +170,7 @@ function PureSendButton({
       data-testid="send-button"
       variant="default"
       size="icon"
-      className="rounded-full p-1.5 h-8 w-8"
+      className="rounded-full p-1.5 h-8 w-8 bg-blob-purple hover:bg-blob-purple/90 shadow-[0_0_10px_rgba(127,133,193,0.2)]"
       onClick={(event) => {
         event.preventDefault();
         submitForm();

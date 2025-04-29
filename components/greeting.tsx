@@ -6,25 +6,25 @@ export const Greeting = () => {
   return (
     <div
       key="overview"
-      className="max-w-3xl mx-auto md:mt-20 px-8 size-full flex flex-col justify-center"
+      className="max-w-3xl mx-auto md:mt-20 size-full flex flex-col justify-end"
     >
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.1 }} // Faster delay
-        className="text-2xl font-semibold"
+        className="text-[33px] font-semibold"
       >
-        Hello there!
+        Say &ldquo;Hi&rdquo; to
       </motion.div>
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 10 }}
         transition={{ delay: 0.2 }} // Faster delay
-        className="text-2xl text-zinc-500 dark:text-zinc-400" // Added dark mode color
+        className="text-[63px] font-semibold bg-gradient-to-r from-[#7F85C1] to-[#FF66C4] bg-clip-text text-transparent"
       >
-        How can I help you today?
+        Minerva
       </motion.div>
     </div>
   );

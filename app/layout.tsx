@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import FloatingGradientBackground from "@/components/floating-gradient-background";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +36,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
+          <FloatingGradientBackground blurStrength={180} numberOfBlobs={9} />
           {children}
           <Toaster />
         </ThemeProvider>

@@ -22,6 +22,10 @@
   --input: 240 5.9% 90%;
   --ring: 235 23% 63%; /* #7F85C1 */
   --radius: 0.5rem;
+  
+  /* Blob gradient colors */
+  --blob-purple: #7F85C1;
+  --blob-pink: #FF66C4;
 
   /* Font Variables */
   --font-geist: Geist, sans-serif;
@@ -49,6 +53,10 @@
   --border: 240 3.7% 15.9%;
   --input: 240 3.7% 15.9%;
   --ring: 235 23% 63%; /* #7F85C1 */
+  
+  /* Keep the same blob colors in dark mode */
+  --blob-purple: #7F85C1;
+  --blob-pink: #FF66C4;
 }
 
 /* Base Styles */
