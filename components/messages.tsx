@@ -24,7 +24,7 @@ function PureMessages({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4 pb-4 chat-messages-main" // Added pb-4
+      className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-auto pt-4 pb-4 chat-messages-main"
     >
       {messages.length === 0 && <Greeting />}
 
@@ -42,7 +42,7 @@ function PureMessages({
 
       <div
         ref={messagesEndRef}
-        className="shrink-0 h-4 chat-messages-main" // Adjusted height
+        className="shrink-0 h-8 chat-messages-end"
       />
     </div>
   );
