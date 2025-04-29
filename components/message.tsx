@@ -6,7 +6,7 @@ import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { SparklesIcon } from './icons';
 import { Markdown } from './markdown';
-import { BookCard } from './book-card';
+import { BookGrid } from './book-grid';
 import { BookListSchema } from '@/lib/ai/schemas';
 import React from 'react';
 
@@ -115,15 +115,10 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
                       const validBooks = parseResult.data;
                       console.log(`[UI Render] Successfully validated ${validBooks.length} book cards`);
                       
-                      // Render book cards in a responsive flex container
+                      // Use the BookGrid component instead of flex container
                       return (
-                        <div key={baseKey} className="book-cards-container mt-4 flex flex-wrap gap-4">
-                          {validBooks.map((book, bookIndex) => (
-                            <BookCard
-                              key={book.url || `${baseKey}-book-${bookIndex}`}
-                              book={book}
-                            />
-                          ))}
+                        <div key={baseKey} className="mt-4 w-full">
+                          <BookGrid books={validBooks} />
                         </div>
                       );
                     }

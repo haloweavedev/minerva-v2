@@ -1,5 +1,4 @@
 'use client';
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Book } from '@/lib/ai/schemas';
@@ -12,59 +11,93 @@ interface BookCardProps {
 
 export function BookCard({ book, className }: BookCardProps) {
   const src = book.featuredImage || '/placeholder-cover.jpg';
+  
+  // Generate Amazon buy link if ASIN is available
+  const buyLink = book.asin ? `https://www.amazon.com/dp/${book.asin}?tag=allaboutromance` : '#';
+
+  // Stop propagation for Buy button so it doesn't trigger the card link
+  const handleBuyClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (buyLink !== '#') {
+      window.open(buyLink, '_blank');
+    }
+  };
 
   return (
-    <div className={cn("border rounded-lg p-4 bg-card text-card-foreground shadow-sm max-w-xs w-full flex flex-col", className)}>
-      <div className="flex-grow">
-        <div className="mb-3 flex justify-center relative w-[150px] h-[230px] mx-auto">
+    <Link 
+      href={book.url || '#'} 
+      className={cn(
+        "relative block border rounded-lg overflow-hidden bg-white/60 text-card-foreground shadow-sm w-full transition-all hover:shadow-md hover:bg-white/70", 
+        className
+      )}
+    >
+      {/* Top Banner with Grade and Buy Button */}
+      <div className="absolute top-0 left-0 right-0 flex justify-between z-10 p-2">
+        {book.grade && (
+          <div className="bg-[#7f85c1] text-white font-bold px-3 py-1.5 rounded-md text-sm">
+            {book.grade}
+          </div>
+        )}
+        
+        <button 
+          onClick={handleBuyClick}
+          type="button"
+          className="bg-[#7f85c1] text-white font-bold px-3 py-1.5 rounded-md text-sm hover:bg-[#6c72a6] transition-colors"
+        >
+          Buy
+        </button>
+      </div>
+
+      {/* Book Cover */}
+      <div className="flex justify-center p-4 pt-12 pb-3">
+        <div className="relative w-[150px] h-[230px]">
           <Image 
             src={src} 
             alt={`Cover of ${book.title}`} 
             fill
-            className="rounded-md object-cover" 
+            className="object-cover rounded shadow-md" 
+            priority
           />
         </div>
-        <h3 className="font-semibold text-base mb-1 truncate" title={book.title}>{book.title}</h3>
-        <p className="text-sm text-muted-foreground mb-2 truncate">by {book.author}</p>
+      </div>
 
-        {/* Display Grade */}
-        {book.grade && <p className="text-xs mb-1"><span className="font-medium">Grade:</span> {book.grade}</p>}
-
-        {/* Display Book Type */}
-        {book.bookType && <p className="text-xs mb-1"><span className="font-medium">Type:</span> {book.bookType}</p>}
-
-        {/* Display Tags */}
-        {book.tags && book.tags.length > 0 && (
-          <div className="mb-2">
-            <p className="text-xs font-medium mb-0.5">Tags:</p>
-            <div className="flex flex-wrap gap-1 text-xs">
-              {book.tags.slice(0, 3).map(tag => (
-                <span key={tag} className="bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded truncate">{tag}</span>
-              ))}
-              {book.tags.length > 3 && <span className="text-muted-foreground">...</span>}
+      {/* Book Details */}
+      <div className="p-4 pt-0 bg-transparent">
+        {/* Title and Author */}
+        <h2 className="text-lg font-bold text-center text-gray-800 mb-1">{book.title}</h2>
+        <h3 className="text-base text-center text-gray-600 mb-3">by {book.author}</h3>
+        
+        {/* Tags */}
+        <div className="mb-3">
+          {book.tags && book.tags.length > 0 && (
+            <div className="flex items-center">
+              <p className="text-xs font-medium mr-2">Tags:</p>
+              <div className="flex flex-wrap gap-1">
+                {book.tags.map(tag => (
+                  <span key={tag} className="bg-[#7f85c1]/20 text-[#7f85c1] text-xs px-2 py-0.5 rounded-full">
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
+          )}
+        </div>
+
+        {/* Book Type */}
+        {book.bookType && (
+          <div className="text-xs mb-1.5">
+            <span className="font-medium">Book Type:</span> {book.bookType}
           </div>
         )}
-
-        {/* Display Summary */}
-        {book.summary && (
-           <p className="text-xs text-muted-foreground mt-2 border-t pt-2 italic line-clamp-3">&ldquo;{book.summary}&rdquo;</p>
+        
+        {/* Sensuality Rating */}
+        {book.sensuality && (
+          <div className="text-xs mb-1.5">
+            <span className="font-medium">Sensuality:</span> {book.sensuality}
+          </div>
         )}
       </div>
-
-      {/* Link to review */}
-      <div className="mt-3 pt-2 border-t">
-         {book.url && (
-            <Link
-               href={book.url}
-               target="_blank"
-               rel="noopener noreferrer"
-               className="text-xs text-primary hover:underline block text-center"
-            >
-               Read Full AAR Review
-            </Link>
-         )}
-      </div>
-    </div>
+    </Link>
   );
 } 
