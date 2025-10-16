@@ -1,6 +1,6 @@
 import { streamText, type Message, type CoreMessage } from 'ai';
 import { languageModel } from '@/lib/ai/providers';
-import { baseSystemPrompt, systemPromptWithContext, recommendationPrompt, followUpPrompt, comparisonPrompt } from '@/lib/ai/prompts';
+import { baseSystemPrompt, systemPromptWithContext, recommendationPrompt, followUpPrompt, comparisonPrompt, analysisPrompt } from '@/lib/ai/prompts';
 import { displayBookCards } from '@/lib/ai/tools/display-book-cards';
 import { generateUUID } from '@/lib/utils';
 import { analyzeQuery } from '@/lib/ai/query-analyzer';
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       console.log('[API] Using recommendation prompt without retrieval');
       
     } else if (type === 'comparison' && filters.titles && Array.isArray(filters.titles) && filters.titles.length === 2) {
-      contextUsed = await getContext(userQuery, filters);
+      contextUsed = await getContext(userQuery, filters, undefined, { queryType: type });
       promptMessages = [
         { role: 'system', content: comparisonPrompt(contextUsed) },
         ...coreUserAssistantMessages.filter(msg => msg.role !== 'system')
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
       
     } else if (type === 'book_info') {
       // 1. Retrieve context for the specific book
-      contextUsed = await getContext(userQuery, filters);
+      contextUsed = await getContext(userQuery, filters, undefined, { queryType: type });
       
       // 2. Build prompt messages
       promptMessages = [
@@ -120,14 +120,14 @@ export async function POST(req: Request) {
         model: languageModel,
         messages: promptMessages,
         tools: { displayBookCards }, 
-        temperature: 0.7,
-        maxTokens: 1024,
+        temperature: Number(process.env.AI_TEMPERATURE ?? '0.3'),
+        maxTokens: Number.parseInt(process.env.AI_MAX_TOKENS || '', 10) || 1536,
         maxSteps: 2 // Allow text generation + tool call
       });
       return result.toDataStreamResponse();
     } else {
       // For book info or general queries, retrieve relevant context
-      contextUsed = await getContext(userQuery, filters);
+      contextUsed = await getContext(userQuery, filters, undefined, { queryType: type });
       
       // Cache this context for future follow-up questions
       if (contextUsed) {
@@ -138,10 +138,18 @@ export async function POST(req: Request) {
         console.log(`[API] Cached context for: ${filters.title || 'general query'}`);
         
         // Use the context in the prompt
-        promptMessages = [
-          { role: 'system', content: systemPromptWithContext(contextUsed) },
-          ...coreUserAssistantMessages.filter(msg => msg.role !== 'system') // Exclude any system messages
-        ];
+        // Use specialized prompt for review analysis
+        if (type === 'review_analysis') {
+          promptMessages = [
+            { role: 'system', content: analysisPrompt(contextUsed) },
+            ...coreUserAssistantMessages.filter(msg => msg.role !== 'system')
+          ];
+        } else {
+          promptMessages = [
+            { role: 'system', content: systemPromptWithContext(contextUsed) },
+            ...coreUserAssistantMessages.filter(msg => msg.role !== 'system') // Exclude any system messages
+          ];
+        }
         console.log(`[API] Retrieved context length: ${contextUsed.length} chars`);
       } else {
         // No context found, use base prompt
@@ -164,8 +172,8 @@ export async function POST(req: Request) {
       model: languageModel,
       messages: promptMessages,
       tools: { displayBookCards },
-      temperature: 0.7,
-      maxTokens: 1024,
+      temperature: Number(process.env.AI_TEMPERATURE ?? '0.3'),
+      maxTokens: Number.parseInt(process.env.AI_MAX_TOKENS || '', 10) || 1536,
       maxSteps: 2  // Allow the model to call a tool and then respond based on the result
     });
 

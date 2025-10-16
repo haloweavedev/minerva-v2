@@ -12,7 +12,8 @@ export type QueryType =
   | 'author_info'      // User wants info about an author
   | 'comparison'       // User wants to compare two books
   | 'general'          // Other general queries
-  | 'follow_up';       // Follow-up question to previous query
+  | 'follow_up'        // Follow-up question to previous query
+  | 'review_analysis'; // Analyze a review's strengths/weaknesses/themes
 
 // Result of query analysis
 export interface QueryAnalysisResult {
@@ -35,7 +36,7 @@ export async function analyzeQuery(query: string): Promise<QueryAnalysisResult> 
           content: `You are a JSON extractor for a romance book chatbot. 
 Given the user query, analyze it and return a JSON object with the following structure:
 {
-  "type": one of "recommendation", "book_info", "author_info", "comparison", "general", "follow_up",
+  "type": one of "recommendation", "book_info", "author_info", "comparison", "general", "follow_up", "review_analysis",
   "filters": {
     // For recommendations
     "grade": optional letter grade filter like "A+" or "B",
@@ -43,6 +44,8 @@ Given the user query, analyze it and return a JSON object with the following str
     "similarTo": optional title of a book the user likes,
     "tags": optional array of tropes or themes like ["arranged marriage", "enemies to lovers"],
     "keywords": optional general search terms,
+    "sensuality": optional sensuality level like "Kisses", "Subtle", "Warm", "Hot",
+    "bookTypes": optional book type(s) like "Regency Romance", "Contemporary Romance",
     
     // For book_info
     "title": optional specific book title,
@@ -57,7 +60,8 @@ Examples:
 1. "Recommend me some medieval romance books" → {"type":"recommendation","filters":{"subgenre":"medieval"}}
 2. "Tell me about The Velvet Bond by Catherine Archer" → {"type":"book_info","filters":{"title":"The Velvet Bond","author":"Catherine Archer"}}
 3. "Compare Pride and Prejudice with Persuasion" → {"type":"comparison","filters":{"titles":["Pride and Prejudice","Persuasion"]}}
-4. "Are there any good enemies to lovers romances?" → {"type":"recommendation","filters":{"tags":["enemies to lovers"]}}` 
+4. "Are there any good enemies to lovers romances?" → {"type":"recommendation","filters":{"tags":["enemies to lovers"]}}
+5. "Can you analyze the review for Black Tree Moon—what did the reviewer praise or criticize?" → {"type":"review_analysis","filters":{"title":"Black Tree Moon"}}` 
         },
         { role: 'user', content: query }
       ],

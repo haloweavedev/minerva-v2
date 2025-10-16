@@ -32,7 +32,9 @@ export const RecommendationQuerySchema = z.object({
   subgenre: z.string().optional().describe("Filter by subgenre or setting (e.g. 'medieval', 'Regency')"),
   similarTo: z.string().optional().describe("A book title the user liked to find similar recommendations"),
   keywords: z.string().optional().describe("General keywords or criteria for the recommendations"),
-  tags: z.array(z.string()).optional().describe("Specific romance tropes or themes to filter by")
+  tags: z.array(z.string()).optional().describe("Specific romance tropes or themes to filter by"),
+  sensuality: z.string().optional().describe("Desired sensuality level, e.g., 'Kisses', 'Subtle', 'Warm', 'Hot'"),
+  bookTypes: z.union([z.string(), z.array(z.string())]).optional().describe("Desired book type(s), e.g., 'Regency Romance', 'Contemporary Romance'")
 });
 
 // Type exports for TypeScript

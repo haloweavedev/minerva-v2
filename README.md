@@ -35,6 +35,21 @@ OPENAI_EMBEDDING_MODEL_ID=text-embedding-3-small
 # Optional: Override default chat models
 # OPENAI_MODEL_ID=gpt-4-turbo
 # GOOGLE_MODEL_ID=gemini-1.5-pro-latest
+
+# RAG tunables (optional)
+# Retrieval
+RAG_TOP_K=8                      # candidates per query
+RAG_MIN_SCORE=0.65               # min similarity threshold (0..1)
+RAG_ENABLE_HYDE=true             # enable query expansions on weak recall
+RAG_HYDE_VARIANTS=2              # number of expansions
+RAG_MAX_CONTEXT_CHARS=8000       # cap for injected context size
+RAG_MAX_SNIPPET_CHARS=900        # per-snippet truncation
+RAG_RERANK=true                  # lightweight reranking heuristic
+RAG_ONLY_FULL_REVIEW=true        # prefer only full review chunks
+
+# Generation
+AI_MAX_TOKENS=1536               # max tokens for responses
+AI_TEMPERATURE=0.3               # steadier, more factual outputs
 ```
 
 ## Getting Started
@@ -56,6 +71,8 @@ OPENAI_EMBEDDING_MODEL_ID=text-embedding-3-small
 1. **RAG Process**:
    - User query is converted to an embedding using OpenAI's `text-embedding-3-small`
    - Pinecone searches for semantically similar content in the book reviews
+   - If recall is weak, Minerva can generate 1–2 query expansions (HYDE-style) and re-query to improve coverage
+   - Lightweight reranking blends vector score, lexical overlap (incl. tags), subgenre/sensuality alignment, and AAR grade preference
    - Relevant context is retrieved and sent to the LLM along with the user query
 
 2. **Book Card Display**:
