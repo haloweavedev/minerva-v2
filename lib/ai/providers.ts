@@ -14,7 +14,7 @@ const languageModel: LanguageModelV1 = (() => {
       apiKey: process.env.GROQ_API_KEY,
       baseURL: 'https://api.groq.com/openai/v1',
     });
-    return groq(process.env.GROQ_MODEL_ID || 'openai/gpt-oss-20b');
+    return groq(process.env.GROQ_MODEL_ID || 'llama-3.3-70b-versatile');
   }
 
   if (providerName === 'openai') {

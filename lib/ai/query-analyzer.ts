@@ -11,7 +11,7 @@ function getAnalyzerModel() {
     apiKey,
     baseURL: 'https://api.groq.com/openai/v1',
   });
-  return groq(process.env.GROQ_MODEL_ID || 'openai/gpt-oss-20b');
+  return groq(process.env.GROQ_MODEL_ID || 'llama-3.3-70b-versatile');
 }
 
 // Query types
