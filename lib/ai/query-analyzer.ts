@@ -1,44 +1,39 @@
-import OpenAI from 'openai';
+import { createOpenAI } from '@ai-sdk/openai';
+import { generateText } from 'ai';
 
-// Initialize OpenAI client for direct API access
-const openaiClient = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Use Groq for query analysis (fast, cheap)
+function getAnalyzerModel() {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY environment variable is not set.');
+  }
+  const groq = createOpenAI({
+    apiKey,
+    baseURL: 'https://api.groq.com/openai/v1',
+  });
+  return groq(process.env.GROQ_MODEL_ID || 'openai/gpt-oss-20b');
+}
 
 // Query types
-export type QueryType = 
-  | 'recommendation'   // User wants book recommendations
-  | 'book_info'        // User wants info about a specific book
-  | 'author_info'      // User wants info about an author
-  | 'comparison'       // User wants to compare two books
-  | 'general'          // Other general queries
-  | 'follow_up'        // Follow-up question to previous query
-  | 'review_analysis'; // Analyze a review's strengths/weaknesses/themes
+export type QueryType =
+  | 'recommendation'
+  | 'book_info'
+  | 'author_info'
+  | 'comparison'
+  | 'general'
+  | 'follow_up'
+  | 'review_analysis';
 
-// Result of query analysis
 export interface QueryAnalysisResult {
   type: QueryType;
   filters: Record<string, unknown>;
 }
 
-/**
- * Analyzes user query using LLM to extract intent and parameters
- */
-export async function analyzeQuery(query: string): Promise<QueryAnalysisResult> {
-  try {
-    console.log(`[QueryAnalyzer] Analyzing query: "${query}"`);
-    
-    const response = await openaiClient.chat.completions.create({
-      model: process.env.OPENAI_MODEL_ID || 'gpt-4-turbo',
-      messages: [
-        { 
-          role: 'system', 
-          content: `You are a JSON extractor for a romance book chatbot. 
+const SYSTEM_PROMPT = `You are a JSON extractor for a romance book chatbot.
 Given the user query, analyze it and return a JSON object with the following structure:
 {
   "type": one of "recommendation", "book_info", "author_info", "comparison", "general", "follow_up", "review_analysis",
   "filters": {
-    // For recommendations
     "grade": optional letter grade filter like "A+" or "B",
     "subgenre": optional subgenre like "medieval", "regency", "contemporary",
     "similarTo": optional title of a book the user likes,
@@ -46,12 +41,8 @@ Given the user query, analyze it and return a JSON object with the following str
     "keywords": optional general search terms,
     "sensuality": optional sensuality level like "Kisses", "Subtle", "Warm", "Hot",
     "bookTypes": optional book type(s) like "Regency Romance", "Contemporary Romance",
-    
-    // For book_info
     "title": optional specific book title,
     "titles": optional array of book titles (for comparison queries),
-    
-    // For author_info
     "author": optional author name
   }
 }
@@ -61,27 +52,39 @@ Examples:
 2. "Tell me about The Velvet Bond by Catherine Archer" → {"type":"book_info","filters":{"title":"The Velvet Bond","author":"Catherine Archer"}}
 3. "Compare Pride and Prejudice with Persuasion" → {"type":"comparison","filters":{"titles":["Pride and Prejudice","Persuasion"]}}
 4. "Are there any good enemies to lovers romances?" → {"type":"recommendation","filters":{"tags":["enemies to lovers"]}}
-5. "Can you analyze the review for Black Tree Moon—what did the reviewer praise or criticize?" → {"type":"review_analysis","filters":{"title":"Black Tree Moon"}}` 
-        },
-        { role: 'user', content: query }
+5. "Can you analyze the review for Black Tree Moon?" → {"type":"review_analysis","filters":{"title":"Black Tree Moon"}}
+
+Return ONLY the JSON object, no additional text.`;
+
+/**
+ * Analyzes user query using Groq LLM to extract intent and parameters.
+ */
+export async function analyzeQuery(query: string): Promise<QueryAnalysisResult> {
+  try {
+    console.log(`[QueryAnalyzer] Analyzing query: "${query}"`);
+
+    const model = getAnalyzerModel();
+    const { text } = await generateText({
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: query },
       ],
-      temperature: 0.1, // Low temperature for deterministic output
-      response_format: { type: "json_object" }
+      temperature: 0.1,
     });
 
-    const content = response.choices[0]?.message.content;
-    if (!content) {
-      throw new Error("No content in response from language model");
+    // Extract JSON from response (handle potential markdown wrapping)
+    let jsonStr = text.trim();
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
     }
 
-    // Parse the JSON response
-    const result = JSON.parse(content) as QueryAnalysisResult;
-    console.log('[QueryAnalyzer] Analysis Result:', JSON.stringify(result, null, 2));
-    
+    const result = JSON.parse(jsonStr) as QueryAnalysisResult;
+    console.log('[QueryAnalyzer] Result:', JSON.stringify(result, null, 2));
     return result;
   } catch (error) {
     console.error('[QueryAnalyzer] Error:', error);
-    // Return a general query type on error
     return { type: 'general', filters: {} };
   }
-} 
+}

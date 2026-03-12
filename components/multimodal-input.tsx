@@ -15,7 +15,6 @@ import { Textarea } from './ui/textarea';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { cn } from '@/lib/utils';
 
-// Simplified version without attachments and suggested actions
 function PureMultimodalInput({
   input,
   setInput,
@@ -86,13 +85,17 @@ function PureMultimodalInput({
         <Textarea
           data-testid="multimodal-input"
           ref={textareaRef}
-          placeholder="Send a message..."
+          placeholder="Ask Minerva about romance novels..."
           value={input}
           onChange={handleInput}
           className={cn(
             'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 w-full',
-            'border-blob-purple focus-visible:border-blob-purple focus-visible:ring-blob-purple/30',
-            'shadow-[0_0_10px_rgba(127,133,193,0.1)] backdrop-blur-sm bg-white/30 dark:bg-white/5',
+            'border-[#7f85c1]/30 focus-visible:border-[#7f85c1] focus-visible:ring-[#7f85c1]/20',
+            'shadow-[0_0_12px_rgba(127,133,193,0.08)] backdrop-blur-sm',
+            'bg-white/40 dark:bg-white/5',
+            'placeholder:text-gray-400 dark:placeholder:text-gray-500',
+            'transition-shadow duration-200',
+            'focus-visible:shadow-[0_0_16px_rgba(127,133,193,0.15)]',
             className,
           )}
           rows={1}
@@ -116,10 +119,7 @@ function PureMultimodalInput({
           {status === 'streaming' ? (
             <StopButton stop={stop} />
           ) : (
-            <SendButton
-              input={input}
-              submitForm={submitForm}
-            />
+            <SendButton input={input} submitForm={submitForm} />
           )}
         </div>
       </div>
@@ -127,7 +127,6 @@ function PureMultimodalInput({
   );
 }
 
-// Simplified memoization
 export const MultimodalInput = memo(
   PureMultimodalInput,
   (prevProps, nextProps) => {
@@ -137,14 +136,13 @@ export const MultimodalInput = memo(
   },
 );
 
-// Stop Button
 function PureStopButton({ stop }: { stop: () => void }) {
   return (
     <Button
       data-testid="stop-button"
       variant="outline"
       size="icon"
-      className="rounded-full p-1.5 h-8 w-8 border border-blob-purple backdrop-blur-sm bg-white/30 dark:bg-white/5 text-blob-purple dark:text-blob-purple hover:bg-blob-purple/10"
+      className="rounded-full p-1.5 h-8 w-8 border-[#7f85c1]/30 backdrop-blur-sm bg-white/40 dark:bg-white/5 text-[#7f85c1] hover:bg-[#7f85c1]/10 transition-colors"
       onClick={(event) => {
         event.preventDefault();
         stop();
@@ -157,7 +155,6 @@ function PureStopButton({ stop }: { stop: () => void }) {
 }
 const StopButton = memo(PureStopButton);
 
-// Send Button
 function PureSendButton({
   submitForm,
   input,
@@ -170,7 +167,7 @@ function PureSendButton({
       data-testid="send-button"
       variant="default"
       size="icon"
-      className="rounded-full p-1.5 h-8 w-8 bg-blob-purple hover:bg-blob-purple/90 shadow-[0_0_10px_rgba(127,133,193,0.2)]"
+      className="rounded-full p-1.5 h-8 w-8 bg-[#7f85c1] hover:bg-[#6c72a6] shadow-[0_0_10px_rgba(127,133,193,0.2)] transition-all duration-200"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
@@ -184,4 +181,4 @@ function PureSendButton({
 }
 const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
   return prevProps.input === nextProps.input;
-}); 
+});

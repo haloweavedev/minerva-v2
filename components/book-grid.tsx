@@ -10,13 +10,13 @@ interface BookGridProps {
 
 export function BookGrid({ books, className }: BookGridProps) {
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6", className)}>
+    <div className={cn('grid grid-cols-1 sm:grid-cols-2 gap-4', className)}>
       {books.map((book) => (
-        <BookCard 
-          key={`book-${book.title}-${book.author}-${book.postId || Math.random().toString(36).substring(2, 9)}`} 
-          book={book} 
+        <BookCard
+          key={`book-${book.title}-${book.author}-${book.postId || Math.random().toString(36).substring(2, 9)}`}
+          book={book}
         />
       ))}
     </div>
   );
-} 
+}
