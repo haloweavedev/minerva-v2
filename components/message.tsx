@@ -121,24 +121,6 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
               return null;
             })}
 
-            {/* Legacy message format */}
-            {message.content && message.parts == null && (
-              <div className="flex flex-row gap-2 items-start">
-                <div
-                  data-testid="message-content"
-                  className={cn(
-                    'prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 max-w-none',
-                    {
-                      'bg-primary text-primary-foreground px-3.5 py-2 rounded-2xl': message.role === 'user',
-                      'px-3 py-2': message.role === 'assistant'
-                    },
-                    message.role === 'user' && 'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none !text-base bg-muted dark:border-zinc-700'
-                  )}
-                >
-                  <Markdown>{message.content}</Markdown>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </motion.div>

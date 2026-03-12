@@ -1,4 +1,4 @@
-import { createOpenAI } from '@ai-sdk/openai';
+import { createGroq } from '@ai-sdk/groq';
 import { generateText } from 'ai';
 
 // Use Groq for query analysis (fast, cheap)
@@ -7,11 +7,8 @@ function getAnalyzerModel() {
   if (!apiKey) {
     throw new Error('GROQ_API_KEY environment variable is not set.');
   }
-  const groq = createOpenAI({
-    apiKey,
-    baseURL: 'https://api.groq.com/openai/v1',
-  });
-  return groq(process.env.GROQ_MODEL_ID || 'llama-3.3-70b-versatile');
+  const groq = createGroq({ apiKey });
+  return groq(process.env.GROQ_MODEL_ID || 'openai/gpt-oss-20b');
 }
 
 // Query types
@@ -71,6 +68,9 @@ export async function analyzeQuery(query: string): Promise<QueryAnalysisResult> 
         { role: 'user', content: query },
       ],
       temperature: 0.1,
+      providerOptions: {
+        groq: { reasoningFormat: 'hidden' },
+      },
     });
 
     // Extract JSON from response (handle potential markdown wrapping)

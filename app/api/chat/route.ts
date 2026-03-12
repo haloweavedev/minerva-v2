@@ -1,4 +1,4 @@
-import { streamText, type Message, type CoreMessage } from 'ai';
+import { streamText, type UIMessage, type ModelMessage, convertToModelMessages, stepCountIs } from 'ai';
 import { languageModel } from '@/lib/ai/providers';
 import { baseSystemPrompt, systemPromptWithContext, recommendationPrompt, followUpPrompt, comparisonPrompt, analysisPrompt } from '@/lib/ai/prompts';
 import { displayBookCards } from '@/lib/ai/tools/display-book-cards';
@@ -9,24 +9,23 @@ import { getContext } from '@/utils/getContext';
 // Context cache for follow-up questions
 const contextCache = new Map<string, { title?: string; context: string }>();
 
-function convertToCoreMessages(messages: Message[]): CoreMessage[] {
-  return messages.map(msg => {
-    if (msg.role === 'user') return { role: 'user' as const, content: msg.content };
-    if (msg.role === 'assistant') return { role: 'assistant' as const, content: msg.content };
-    if (msg.role === 'system') return { role: 'system' as const, content: msg.content };
-    return { role: 'user' as const, content: typeof msg.content === 'string' ? msg.content : '' };
-  });
+function extractUserText(msg: UIMessage): string {
+  if (msg.parts) {
+    const textPart = msg.parts.find(p => p.type === 'text');
+    if (textPart && 'text' in textPart) return textPart.text;
+  }
+  return '';
 }
 
 export async function POST(req: Request) {
   try {
-    const { messages }: { messages: Message[] } = await req.json();
+    const { messages }: { messages: UIMessage[] } = await req.json();
 
     if (!messages || messages.length === 0) {
       return Response.json({ error: 'Missing or empty messages array' }, { status: 400 });
     }
 
-    const messagesWithIds: Message[] = messages.map(msg => ({
+    const messagesWithIds: UIMessage[] = messages.map(msg => ({
       ...msg,
       id: msg.id ?? generateUUID(),
     }));
@@ -36,9 +35,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Last message must be from user' }, { status: 400 });
     }
 
-    const userQuery = typeof lastUserMessage.content === 'string'
-      ? lastUserMessage.content
-      : '';
+    const userQuery = extractUserText(lastUserMessage);
 
     console.log('[API] Processing query:', userQuery);
 
@@ -48,13 +45,11 @@ export async function POST(req: Request) {
     const { type, filters } = await analyzeQuery(userQuery);
     console.log(`[API] Query type: ${type}, Filters:`, filters);
 
-    const validMessages = messagesWithIds.filter(msg =>
-      ['user', 'assistant', 'system'].includes(msg.role)
-    );
-    const coreMessages = convertToCoreMessages(validMessages);
-    const nonSystemMessages = coreMessages.filter(msg => msg.role !== 'system');
+    // Convert UI messages to model messages using SDK helper
+    const modelMessages = await convertToModelMessages(messagesWithIds);
+    const nonSystemMessages = modelMessages.filter(msg => msg.role !== 'system');
 
-    let promptMessages: CoreMessage[] = [];
+    let promptMessages: ModelMessage[] = [];
     let contextUsed = '';
 
     if (type === 'recommendation') {
@@ -101,10 +96,13 @@ export async function POST(req: Request) {
         messages: promptMessages,
         tools: { displayBookCards },
         temperature: Number(process.env.AI_TEMPERATURE ?? '0.4'),
-        maxTokens: Number.parseInt(process.env.AI_MAX_TOKENS || '', 10) || 2048,
-        maxSteps: 2,
+        maxOutputTokens: Number.parseInt(process.env.AI_MAX_TOKENS || '', 10) || 2048,
+        stopWhen: stepCountIs(2),
+        providerOptions: {
+          groq: { reasoningFormat: 'hidden' },
+        },
       });
-      return result.toDataStreamResponse();
+      return result.toUIMessageStreamResponse();
 
     } else {
       // General, author_info, review_analysis
@@ -140,11 +138,14 @@ export async function POST(req: Request) {
       messages: promptMessages,
       tools: { displayBookCards },
       temperature: Number(process.env.AI_TEMPERATURE ?? '0.4'),
-      maxTokens: Number.parseInt(process.env.AI_MAX_TOKENS || '', 10) || 2048,
-      maxSteps: 2,
+      maxOutputTokens: Number.parseInt(process.env.AI_MAX_TOKENS || '', 10) || 2048,
+      stopWhen: stepCountIs(2),
+      providerOptions: {
+        groq: { reasoningFormat: 'hidden' },
+      },
     });
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
 
   } catch (error) {
     console.error('[API POST Error]', error);

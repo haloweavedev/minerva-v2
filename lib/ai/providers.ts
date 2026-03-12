@@ -1,20 +1,19 @@
 // lib/ai/providers.ts
-import type { LanguageModelV1 } from 'ai';
+import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
 const providerName = (process.env.AI_PROVIDER || 'groq').toLowerCase();
 
-const languageModel: LanguageModelV1 = (() => {
+const languageModel = (() => {
   if (providerName === 'groq') {
     if (!process.env.GROQ_API_KEY) {
       throw new Error('GROQ_API_KEY environment variable is not set.');
     }
-    const groq = createOpenAI({
+    const groq = createGroq({
       apiKey: process.env.GROQ_API_KEY,
-      baseURL: 'https://api.groq.com/openai/v1',
     });
-    return groq(process.env.GROQ_MODEL_ID || 'llama-3.3-70b-versatile');
+    return groq(process.env.GROQ_MODEL_ID || 'openai/gpt-oss-20b');
   }
 
   if (providerName === 'openai') {

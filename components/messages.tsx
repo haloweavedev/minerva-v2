@@ -5,13 +5,11 @@ import { useScrollToBottom } from './use-scroll-to-bottom'; // Ensure path is co
 import { Greeting } from './greeting'; // Assuming you create this next
 import { memo } from 'react';
 import equal from 'fast-deep-equal';
-import type { UseChatHelpers } from '@ai-sdk/react';
+import type { UIMessage } from 'ai';
 
 interface MessagesProps {
-  // Removed chatId, votes, reload, isReadonly, isArtifactVisible
-  status: UseChatHelpers['status'];
-  messages: UseChatHelpers['messages'];
-  // Removed setMessages for simplicity if not needed directly here
+  status: string;
+  messages: UIMessage[];
 }
 
 function PureMessages({

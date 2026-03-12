@@ -11,7 +11,7 @@ const DisplayBookCardsSchema = RecommendationQuerySchema.extend({
 
 export const displayBookCards = tool({
   description: 'Recommend romance novels based on the user\'s request or display specific books for comparison. Use this tool whenever the user asks for book recommendations or similar books, or to compare specific books.',
-  parameters: DisplayBookCardsSchema,
+  inputSchema: DisplayBookCardsSchema,
   execute: async ({ grade, subgenre, similarTo, keywords, tags, specificTitles, sensuality, bookTypes }) => {
     console.log('[Tool: displayBookCards] Params:', { grade, subgenre, similarTo, keywords, tags, specificTitles, sensuality, bookTypes });
 

@@ -1,33 +1,31 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { generateUUID } from '@/lib/utils';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
 import { toast } from 'sonner';
 import React from 'react';
 
-// Simplified Chat component
 export function Chat() {
-  // Generate a unique ID for this ephemeral chat session on the client
-  // Note: This ID won't persist across refreshes.
-  const chatId = React.useMemo(() => generateUUID(), []);
+  const [input, setInput] = React.useState('');
 
   const {
     messages,
-    handleSubmit,
-    input,
-    setInput,
+    sendMessage,
     status,
     stop,
   } = useChat({
-    id: chatId, // Use the generated ephemeral ID
-    generateId: generateUUID, // Keep for message IDs
     onError: (error) => {
       console.error("Chat error:", error);
       toast.error('An error occurred, please try again!');
     },
   });
+
+  const handleSubmit = React.useCallback(() => {
+    if (input.trim().length === 0) return;
+    sendMessage({ text: input });
+    setInput('');
+  }, [input, sendMessage]);
 
   return (
     <div className="flex flex-col h-full bg-transparent">
@@ -51,4 +49,4 @@ export function Chat() {
       </div>
     </div>
   );
-} 
+}

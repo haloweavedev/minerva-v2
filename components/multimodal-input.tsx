@@ -12,8 +12,16 @@ import { useLocalStorage } from 'usehooks-ts';
 import { ArrowUpIcon, StopIcon } from './icons';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
-import type { UseChatHelpers } from '@ai-sdk/react';
 import { cn } from '@/lib/utils';
+
+interface MultimodalInputProps {
+  input: string;
+  setInput: (value: string) => void;
+  status: string;
+  stop: () => void;
+  handleSubmit: () => void;
+  className?: string;
+}
 
 function PureMultimodalInput({
   input,
@@ -22,14 +30,7 @@ function PureMultimodalInput({
   stop,
   handleSubmit,
   className,
-}: {
-  input: UseChatHelpers['input'];
-  setInput: UseChatHelpers['setInput'];
-  status: UseChatHelpers['status'];
-  stop: UseChatHelpers['stop'];
-  handleSubmit: UseChatHelpers['handleSubmit'];
-  className?: string;
-}) {
+}: MultimodalInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const adjustHeight = useCallback(() => {
@@ -72,12 +73,11 @@ function PureMultimodalInput({
 
   const submitForm = useCallback(() => {
     if (input.trim().length === 0) return;
-    handleSubmit(undefined);
-    setInput('');
+    handleSubmit();
     setLocalStorageInput('');
     resetHeight();
     textareaRef.current?.focus();
-  }, [handleSubmit, input, setInput, setLocalStorageInput, resetHeight]);
+  }, [handleSubmit, input, setLocalStorageInput, resetHeight]);
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); submitForm(); }} className="w-full">
