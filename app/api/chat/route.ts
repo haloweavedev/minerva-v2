@@ -78,13 +78,24 @@ export async function POST(req: Request) {
         ];
         console.log(`[API] Follow-up using cached context for: ${cached.title || 'previous topic'}`);
       } else {
-        // No cache (serverless lost it, or recommendation didn't cache) — do fresh RAG search
-        console.log('[API] Follow-up with no cache, falling back to RAG search');
-        contextUsed = await getContext(userQuery, filters, undefined, { queryType: 'book_info' });
+        // No cache (serverless lost it) — reconstruct topic from conversation history
+        const previousUserTexts = messagesWithIds
+          .filter(m => m.role === 'user')
+          .slice(0, -1)
+          .map(m => extractUserText(m))
+          .filter(Boolean);
+
+        // Combine previous user messages with current query for better RAG search
+        const searchQuery = previousUserTexts.length > 0
+          ? `${previousUserTexts[previousUserTexts.length - 1]} ${userQuery}`
+          : userQuery;
+
+        console.log(`[API] Follow-up with no cache, searching with history: "${searchQuery.substring(0, 100)}"`);
+        contextUsed = await getContext(searchQuery, filters, undefined, { queryType: 'book_info' });
         if (contextUsed) {
           contextCache.set(chatId, { title: filters.title as string | undefined, context: contextUsed });
           promptMessages = [
-            { role: 'system', content: systemPromptWithContext(contextUsed) },
+            { role: 'system', content: followUpPrompt(contextUsed) },
             ...nonSystemMessages,
           ];
         } else {
