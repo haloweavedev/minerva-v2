@@ -136,8 +136,8 @@ function reviewToBook(review: import('@/lib/db').BookReview): Book {
     featuredImage: review.cover_url ?? null,
     reviewTags: review.review_tags ?? undefined,
     sensuality: review.sensuality ?? undefined,
-    postDate: review.post_date ?? undefined,
-    publishDate: review.publish_date ?? undefined,
+    postDate: review.post_date ? String(review.post_date) : undefined,
+    publishDate: review.publish_date ? String(review.publish_date) : undefined,
   };
 }
 
@@ -160,8 +160,8 @@ function chunkToBook(chunk: import('@/lib/db').ChunkSearchResult): Book {
     featuredImage: chunk.cover_url ?? null,
     reviewTags: chunk.review_tags ?? undefined,
     sensuality: chunk.sensuality ?? undefined,
-    postDate: chunk.post_date ?? undefined,
-    publishDate: chunk.publish_date ?? undefined,
+    postDate: chunk.post_date ? String(chunk.post_date) : undefined,
+    publishDate: chunk.publish_date ? String(chunk.publish_date) : undefined,
   };
 }
 

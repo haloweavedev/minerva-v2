@@ -1,28 +1,47 @@
 <?php
 /**
- * Drop this into the WordPress root and hit it once:
- *   php export-reviews.php
+ * Batched export of book-review posts with comments.
+ * Drop into WordPress root and run via CLI:
  *
- * Outputs: export-reviews.json (33 latest published book-review posts)
+ *   php export-reviews-batch.php --count              # total published book-reviews
+ *   php export-reviews-batch.php --offset=0 --limit=500  # export a batch
+ *
+ * Outputs JSON to stdout.
  */
 
 // Bootstrap WordPress
 define('ABSPATH', __DIR__ . '/');
 require_once ABSPATH . 'wp-load.php';
 
-$NUM = 33;
+$opts = getopt('', ['count', 'offset:', 'limit:']);
 
-$posts = get_posts([
+// --count mode: just return total and exit
+if (isset($opts['count'])) {
+    $query = new WP_Query([
+        'post_type'      => 'book-review',
+        'post_status'    => 'publish',
+        'posts_per_page' => 1,
+    ]);
+    echo json_encode(['count' => (int) $query->found_posts]);
+    exit(0);
+}
+
+$offset = isset($opts['offset']) ? (int) $opts['offset'] : 0;
+$limit  = isset($opts['limit'])  ? (int) $opts['limit']  : 500;
+
+$query = new WP_Query([
     'post_type'      => 'book-review',
     'post_status'    => 'publish',
-    'posts_per_page' => $NUM,
+    'posts_per_page' => $limit,
+    'offset'         => $offset,
     'orderby'        => 'date',
     'order'          => 'DESC',
 ]);
 
+$posts = $query->posts;
 $reviews = [];
 
-foreach ($posts as $p) {
+foreach ($posts as $index => $p) {
     $id   = $p->ID;
     $meta = get_post_meta($id);
 
@@ -85,9 +104,11 @@ foreach ($posts as $p) {
         'coda'          => $meta['wpcf-coda'][0]              ?? null,
         'comments'      => $comments,
     ];
+
+    // Flush object cache every 100 posts to prevent memory bloat
+    if (($index + 1) % 100 === 0) {
+        wp_cache_flush();
+    }
 }
 
-$outPath = __DIR__ . '/export-reviews.json';
-file_put_contents($outPath, json_encode($reviews, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-
-echo "Exported " . count($reviews) . " reviews to $outPath\n";
+echo json_encode($reviews, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

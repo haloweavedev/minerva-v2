@@ -63,6 +63,9 @@ export async function searchSimilarChunks(
 ): Promise<ChunkSearchResult[]> {
   const vectorStr = `[${embedding.join(',')}]`;
 
+  // Increase HNSW ef_search for better recall at ~46k chunks
+  await sql`SET LOCAL hnsw.ef_search = 100`;
+
   const rows = await sql`
     SELECT
       c.id AS chunk_id,

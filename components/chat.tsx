@@ -27,17 +27,22 @@ export function Chat() {
     setInput('');
   }, [input, sendMessage]);
 
+  const handleQueryClick = React.useCallback((query: string) => {
+    sendMessage({ text: query });
+  }, [sendMessage]);
+
   return (
     <div className="flex flex-col h-full bg-transparent">
       <div className="flex-1 overflow-y-auto">
         <Messages
           status={status}
           messages={messages}
+          onQueryClick={handleQueryClick}
         />
       </div>
 
-      <div className="mt-auto pt-2">
-        <div className="mx-auto px-5 py-3 w-full">
+      <div className="mt-auto">
+        <div className="mx-auto px-5 py-4 w-full">
           <MultimodalInput
             input={input}
             setInput={setInput}

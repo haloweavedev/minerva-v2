@@ -2,7 +2,7 @@ import Link from 'next/link';
 import React, { memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { CodeBlock } from './code-block'; // Ensure this path is correct
+import { CodeBlock } from './code-block';
 
 const components: Partial<Components> = {
   // @ts-expect-error - Type mismatch expected here
@@ -17,13 +17,12 @@ const components: Partial<Components> = {
   },
   li: ({ children, ...props }) => {
     return (
-      <li className="py-1" {...props}>
+      <li className="py-0.5" {...props}>
         {children}
       </li>
     );
   },
   ul: ({ children, ...props }) => {
-    // Changed to ul for semantic correctness, kept list-decimal for visual consistency if desired, or change to list-disc
     return (
       <ul className="list-disc list-outside ml-4" {...props}>
         {children}
@@ -32,16 +31,16 @@ const components: Partial<Components> = {
   },
   strong: ({ children, ...props }) => {
     return (
-      <span className="font-semibold" {...props}>
+      <span className="font-display font-semibold" {...props}>
         {children}
       </span>
     );
   },
   a: ({ children, ...props }) => {
     return (
-      // @ts-expect-error - href might be undefined, handle appropriately if needed
+      // @ts-expect-error - href might be undefined
       <Link
-        className="text-primary hover:underline" // Use primary color
+        className="text-[#7f85c1] hover:text-[#6c72a6] hover:underline underline-offset-2 transition-colors"
         target="_blank"
         rel="noreferrer"
         {...props}
@@ -52,42 +51,42 @@ const components: Partial<Components> = {
   },
   h1: ({ children, ...props }) => {
     return (
-      <h1 className="text-3xl font-semibold mt-6 mb-2" {...props}>
+      <h1 className="font-display text-2xl font-semibold mt-5 mb-2 tracking-tight" {...props}>
         {children}
       </h1>
     );
   },
   h2: ({ children, ...props }) => {
     return (
-      <h2 className="text-2xl font-semibold mt-6 mb-2" {...props}>
+      <h2 className="font-display text-xl font-semibold mt-5 mb-2 tracking-tight" {...props}>
         {children}
       </h2>
     );
   },
   h3: ({ children, ...props }) => {
     return (
-      <h3 className="text-xl font-semibold mt-6 mb-2" {...props}>
+      <h3 className="font-display text-lg font-semibold mt-4 mb-1.5 tracking-tight" {...props}>
         {children}
       </h3>
     );
   },
   h4: ({ children, ...props }) => {
     return (
-      <h4 className="text-lg font-semibold mt-6 mb-2" {...props}>
+      <h4 className="font-display text-base font-semibold mt-4 mb-1.5" {...props}>
         {children}
       </h4>
     );
   },
   h5: ({ children, ...props }) => {
     return (
-      <h5 className="text-base font-semibold mt-6 mb-2" {...props}>
+      <h5 className="font-display text-sm font-semibold mt-4 mb-1" {...props}>
         {children}
       </h5>
     );
   },
   h6: ({ children, ...props }) => {
     return (
-      <h6 className="text-sm font-semibold mt-6 mb-2" {...props}>
+      <h6 className="font-display text-sm font-medium mt-4 mb-1 text-muted-foreground" {...props}>
         {children}
       </h6>
     );
@@ -107,4 +106,4 @@ const NonMemoizedMarkdown = ({ children }: { children: string }) => {
 export const Markdown = memo(
   NonMemoizedMarkdown,
   (prevProps, nextProps) => prevProps.children === nextProps.children,
-); 
+);

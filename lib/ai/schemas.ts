@@ -16,8 +16,8 @@ export const BookSchema = z.object({
     .describe("URL to a featured image for the book (empty or null if unavailable)."),
   reviewTags: z.array(z.string()).optional().describe("Tags from the review content."),
   sensuality: z.string().optional().describe("Sensuality rating from the review."),
-  postDate: z.string().optional().describe("Date when the review was posted."),
-  publishDate: z.string().optional().describe("Date when the book was published.")
+  postDate: z.coerce.string().optional().describe("Date when the review was posted."),
+  publishDate: z.coerce.string().optional().describe("Date when the book was published.")
 });
 
 // Schema for an array of book cards

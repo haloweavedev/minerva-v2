@@ -1,7 +1,7 @@
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1';
-const EMBED_MODEL = 'voyage-3';
-const RERANK_MODEL = 'rerank-2';
-const EMBED_DIMENSION = 1024;
+const EMBED_MODEL = 'voyage-3.5';
+const RERANK_MODEL = 'rerank-2.5';
+const EMBED_DIMENSION = 512;
 const BATCH_SIZE = 40;
 
 if (!process.env.VOYAGE_API_KEY) {

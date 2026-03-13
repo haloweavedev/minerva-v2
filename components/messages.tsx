@@ -1,8 +1,8 @@
 'use client';
 
-import { PreviewMessage, ThinkingMessage } from './message'; // Ensure path is correct
-import { useScrollToBottom } from './use-scroll-to-bottom'; // Ensure path is correct
-import { Greeting } from './greeting'; // Assuming you create this next
+import { PreviewMessage, ThinkingMessage } from './message';
+import { useScrollToBottom } from './use-scroll-to-bottom';
+import { Greeting } from './greeting';
 import { memo } from 'react';
 import equal from 'fast-deep-equal';
 import type { UIMessage } from 'ai';
@@ -10,11 +10,13 @@ import type { UIMessage } from 'ai';
 interface MessagesProps {
   status: string;
   messages: UIMessage[];
+  onQueryClick?: (query: string) => void;
 }
 
 function PureMessages({
   status,
   messages,
+  onQueryClick,
 }: MessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
@@ -22,34 +24,31 @@ function PureMessages({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-auto pt-4 pb-4 chat-messages-main"
+      className="flex flex-col min-w-0 gap-5 flex-1 overflow-y-auto pt-4 pb-4 chat-messages-main"
     >
-      {messages.length === 0 && <Greeting />}
+      {messages.length === 0 && <Greeting onQueryClick={onQueryClick} />}
 
       {messages.map((message, index) => (
         <PreviewMessage
           key={message.id}
           message={message}
           isLoading={status === 'streaming' && messages.length - 1 === index}
-          // Removed props: chatId, vote, setMessages, reload, isReadonly
         />
       ))}
 
-      {/* Simplified thinking state check */}
       {status === 'streaming' && messages[messages.length - 1]?.role === 'user' && <ThinkingMessage />}
 
       <div
         ref={messagesEndRef}
-        className="shrink-0 h-8 chat-messages-end"
+        className="shrink-0 h-6 chat-messages-end"
       />
     </div>
   );
 }
 
-// Simplified memoization
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (prevProps.status !== nextProps.status) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
   if (!equal(prevProps.messages, nextProps.messages)) return false;
   return true;
-}); 
+});

@@ -2,14 +2,14 @@
 
 @theme {
   /* Light theme variables */
-  --background: 0 0% 100%; /* White */
-  --foreground: 240 10% 3.9%; /* Dark Gray/Black */
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 3.9%;
   --primary: 235 23% 63%; /* #7F85C1 */
-  --primary-foreground: 0 0% 100%; /* White */
+  --primary-foreground: 0 0% 100%;
   --secondary: 240 4.8% 95.9%;
   --secondary-foreground: 240 5.9% 10%;
   --muted: 240 4.8% 95.9%;
@@ -20,19 +20,17 @@
   --destructive-foreground: 0 0% 98%;
   --border: 240 5.9% 90%;
   --input: 240 5.9% 90%;
-  --ring: 235 23% 63%; /* #7F85C1 */
+  --ring: 235 23% 63%;
   --radius: 0.5rem;
-  
-  /* Blob gradient colors */
+
   --blob-purple: #7F85C1;
   --blob-pink: #FF66C4;
 
-  /* Font Variables */
-  --font-geist: Geist, sans-serif;
-  --font-geist-mono: "Geist Mono", monospace;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
 }
 
-/* Dark Theme Variable Overrides - outside of @theme */
 :is(.dark) {
   --background: 240 10% 3.9%;
   --foreground: 0 0% 98%;
@@ -40,8 +38,8 @@
   --card-foreground: 0 0% 98%;
   --popover: 240 10% 3.9%;
   --popover-foreground: 0 0% 98%;
-  --primary: 235 23% 63%; /* #7F85C1 */
-  --primary-foreground: 0 0% 100%; /* White */
+  --primary: 235 23% 63%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 240 3.7% 15.9%;
   --secondary-foreground: 0 0% 98%;
   --muted: 240 3.7% 15.9%;
@@ -52,14 +50,12 @@
   --destructive-foreground: 0 0% 98%;
   --border: 240 3.7% 15.9%;
   --input: 240 3.7% 15.9%;
-  --ring: 235 23% 63%; /* #7F85C1 */
-  
-  /* Keep the same blob colors in dark mode */
+  --ring: 235 23% 63%;
+
   --blob-purple: #7F85C1;
   --blob-pink: #FF66C4;
 }
 
-/* Base Styles */
 * {
   border-color: hsl(var(--border));
 }
@@ -67,63 +63,102 @@
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-geist);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
 }
 
-/* Apply mono font to code/pre tags */
 code, pre {
-  font-family: var(--font-geist-mono);
+  font-family: var(--font-mono);
 }
 
-/* Define border radius using the variable */
-:root { /* Apply globally */
-    border-radius: var(--radius);
+:root {
+  border-radius: var(--radius);
 }
-/* Or apply more specifically if needed */
 .rounded-lg { border-radius: var(--radius); }
 .rounded-md { border-radius: calc(var(--radius) - 2px); }
 .rounded-sm { border-radius: calc(var(--radius) - 4px); }
 
-/* Keep utilities layer */
+/* Font utility classes */
+.font-display { font-family: var(--font-display); }
+.font-body { font-family: var(--font-body); }
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
-  /* Add other custom utilities if needed */
 }
 
-/* Keep components layer for potential custom component styles */
 @layer components {
-   /* Example: Ensure prose styles work well */
   .prose {
     color: hsl(var(--foreground));
   }
   .prose p {
-     line-height: 1.625; /* Or use Tailwind class like leading-relaxed */
-     margin-top: 0.5em;
-     margin-bottom: 0.5em;
+    line-height: 1.75;
+    margin-top: 0.35em;
+    margin-bottom: 0.35em;
   }
-   .prose pre {
-     padding: 0; /* Reset padding often added by typography plugin */
-   }
-   .prose code:not(pre code) { /* Inline code styling */
-      @apply text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1 rounded-md font-mono;
-   }
-   .prose pre code { /* Code within pre blocks */
-      @apply whitespace-pre-wrap break-words bg-transparent p-0 border-none rounded-none;
-   }
-   .prose a {
-      color: hsl(var(--primary));
-      text-decoration: none;
-   }
-   .prose a:hover {
-      text-decoration: underline;
-   }
-   /* Add more prose styles as needed */
+  .prose pre {
+    padding: 0;
+  }
+  .prose code:not(pre code) {
+    @apply text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1.5 rounded-md font-mono;
+  }
+  .prose pre code {
+    @apply whitespace-pre-wrap break-words bg-transparent p-0 border-none rounded-none;
+  }
+  .prose a {
+    color: hsl(var(--primary));
+    text-decoration: none;
+  }
+  .prose a:hover {
+    text-decoration: underline;
+  }
+  .prose ul, .prose ol {
+    margin-top: 0.35em;
+    margin-bottom: 0.35em;
+  }
+  .prose li {
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+    line-height: 1.65;
+  }
+  .prose strong {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
 }
 
 .assistant-message-class > p {
   margin: 5px 0 0 0 !important;
+}
+
+/* Scrollbar styling */
+.chat-messages-main::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-messages-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-messages-main::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.12);
+  border-radius: 999px;
+}
+.chat-messages-main::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.25);
+}
+
+/* Subtle noise texture overlay for depth */
+.noise-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.025;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
 }

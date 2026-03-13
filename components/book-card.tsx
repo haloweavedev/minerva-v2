@@ -10,81 +10,77 @@ interface BookCardProps {
   className?: string;
 }
 
+const gradeColor = (grade: string): string => {
+  if (grade.startsWith('A')) return 'bg-emerald-500/90 text-white';
+  if (grade.startsWith('B')) return 'bg-[#7f85c1]/85 text-white';
+  if (grade.startsWith('C')) return 'bg-amber-500/90 text-white';
+  return 'bg-rose-500/90 text-white';
+};
+
 export function BookCard({ book, className }: BookCardProps) {
   const src = book.featuredImage || book.coverUrl || '/placeholder-cover.jpg';
-
-  const buyLink = book.asin ? `https://www.amazon.com/dp/${book.asin}?tag=allaboutromance` : '#';
-
-  const handleBuyClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (buyLink !== '#') {
-      window.open(buyLink, '_blank');
-    }
-  };
+  const buyLink = book.asin ? `https://www.amazon.com/dp/${book.asin}?tag=allaboutromance` : null;
 
   return (
     <motion.div
-      whileHover={{ y: -4, scale: 1.01 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      whileHover={{ y: -3 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       <Link
         href={book.url || '#'}
         target="_blank"
         rel="noopener noreferrer"
         className={cn(
-          'relative block border border-white/20 rounded-xl overflow-hidden',
-          'bg-white/50 dark:bg-white/5 backdrop-blur-sm',
-          'text-card-foreground shadow-sm w-full',
-          'transition-shadow duration-300',
-          'hover:shadow-lg hover:shadow-[#7f85c1]/15',
+          'group relative flex gap-4 p-3.5 rounded-xl overflow-hidden',
+          'bg-white/55 dark:bg-white/5 backdrop-blur-sm',
+          'border border-white/40 dark:border-white/10',
+          'shadow-sm hover:shadow-lg hover:shadow-[#7f85c1]/10',
+          'hover:bg-white/70 dark:hover:bg-white/8',
+          'transition-all duration-250',
           className
         )}
       >
-        {/* Top Banner: Grade + Buy */}
-        <div className="absolute top-0 left-0 right-0 flex justify-between z-10 p-2.5">
-          {book.grade && (
-            <div className="bg-[#7f85c1]/90 backdrop-blur-sm text-white font-bold px-3 py-1.5 rounded-lg text-sm shadow-sm">
-              {book.grade}
-            </div>
-          )}
-          <button
-            onClick={handleBuyClick}
-            type="button"
-            className="bg-[#7f85c1]/90 backdrop-blur-sm text-white font-semibold px-3 py-1.5 rounded-lg text-sm shadow-sm transition-colors hover:bg-[#6c72a6]"
-          >
-            Buy
-          </button>
-        </div>
-
         {/* Cover Image */}
-        <div className="flex justify-center px-5 pt-14 pb-4">
-          <div className="relative w-[140px] h-[210px] rounded-lg overflow-hidden shadow-md">
-            <Image
-              src={src}
-              alt={`Cover of ${book.title}`}
-              fill
-              className="object-cover"
-              sizes="140px"
-              priority
-            />
-          </div>
+        <div className="relative w-[80px] h-[120px] rounded-lg overflow-hidden shadow-md shrink-0 bg-muted/20">
+          <Image
+            src={src}
+            alt={`Cover of ${book.title}`}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="80px"
+          />
+          {/* Subtle overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
         {/* Details */}
-        <div className="px-5 pb-5 space-y-2.5">
-          <div className="text-center">
-            <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 leading-tight">{book.title}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">by {book.author}</p>
+        <div className="flex flex-col min-w-0 flex-1 justify-between py-0.5">
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="font-display text-[14px] font-semibold text-foreground leading-snug line-clamp-2 tracking-tight">
+                {book.title}
+              </h3>
+              {book.grade && (
+                <span className={cn(
+                  'shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md tracking-wide',
+                  gradeColor(book.grade),
+                )}>
+                  {book.grade}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5 tracking-wide">
+              {book.author}
+            </p>
           </div>
 
           {/* Tags */}
           {book.tags && book.tags.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-1.5">
-              {book.tags.slice(0, 4).map(tag => (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {book.tags.slice(0, 3).map(tag => (
                 <span
                   key={tag}
-                  className="bg-[#7f85c1]/10 text-[#7f85c1] dark:text-[#a5aae0] text-xs px-2.5 py-0.5 rounded-full font-medium"
+                  className="text-[10px] px-2 py-0.5 rounded-full bg-[#7f85c1]/8 text-[#7f85c1] dark:text-[#a5aae0] dark:bg-[#7f85c1]/15 font-medium tracking-wide"
                 >
                   {tag}
                 </span>
@@ -92,16 +88,25 @@ export function BookCard({ book, className }: BookCardProps) {
             </div>
           )}
 
-          {/* Meta row */}
-          <div className="flex items-center justify-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+          {/* Footer meta */}
+          <div className="flex items-center gap-2 mt-auto pt-1.5">
             {book.bookType && (
-              <span className="truncate max-w-[140px]">{book.bookType}</span>
+              <span className="text-[10px] text-muted-foreground/70 truncate tracking-wide uppercase font-medium">
+                {book.bookType}
+              </span>
             )}
-            {book.bookType && book.sensuality && (
-              <span className="text-gray-300 dark:text-gray-600">|</span>
-            )}
-            {book.sensuality && (
-              <span>{book.sensuality}</span>
+            {buyLink && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.open(buyLink, '_blank');
+                }}
+                className="ml-auto shrink-0 text-[11px] font-semibold text-[#7f85c1] hover:text-[#6c72a6] transition-colors tracking-wide"
+              >
+                Buy &rarr;
+              </button>
             )}
           </div>
         </div>

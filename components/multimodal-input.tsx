@@ -37,8 +37,7 @@ function PureMultimodalInput({
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       const scrollHeight = textareaRef.current.scrollHeight;
-      const maxHeight = 200;
-      textareaRef.current.style.height = `${Math.min(scrollHeight + 2, maxHeight)}px`;
+      textareaRef.current.style.height = `${Math.min(scrollHeight + 2, 200)}px`;
     }
   }, []);
 
@@ -85,17 +84,19 @@ function PureMultimodalInput({
         <Textarea
           data-testid="multimodal-input"
           ref={textareaRef}
-          placeholder="Ask Minerva about romance novels..."
+          placeholder="Ask about any romance novel..."
           value={input}
           onChange={handleInput}
           className={cn(
-            'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 w-full',
-            'border-[#7f85c1]/30 focus-visible:border-[#7f85c1] focus-visible:ring-[#7f85c1]/20',
-            'shadow-[0_0_12px_rgba(127,133,193,0.08)] backdrop-blur-sm',
-            'bg-white/40 dark:bg-white/5',
-            'placeholder:text-gray-400 dark:placeholder:text-gray-500',
-            'transition-shadow duration-200',
-            'focus-visible:shadow-[0_0_16px_rgba(127,133,193,0.15)]',
+            'min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-[15px] pb-10 w-full',
+            'border-white/30 dark:border-white/10',
+            'focus-visible:border-[#7f85c1]/40 focus-visible:ring-[#7f85c1]/15',
+            'shadow-sm backdrop-blur-md',
+            'bg-white/55 dark:bg-white/5',
+            'placeholder:text-muted-foreground/50 placeholder:font-light',
+            'transition-all duration-250',
+            'focus-visible:shadow-md focus-visible:shadow-[#7f85c1]/8',
+            'focus-visible:bg-white/70 dark:focus-visible:bg-white/8',
             className,
           )}
           rows={1}
@@ -142,7 +143,7 @@ function PureStopButton({ stop }: { stop: () => void }) {
       data-testid="stop-button"
       variant="outline"
       size="icon"
-      className="rounded-full p-1.5 h-8 w-8 border-[#7f85c1]/30 backdrop-blur-sm bg-white/40 dark:bg-white/5 text-[#7f85c1] hover:bg-[#7f85c1]/10 transition-colors"
+      className="rounded-full p-1.5 h-8 w-8 border-white/30 backdrop-blur-sm bg-white/50 dark:bg-white/5 text-[#7f85c1] hover:bg-[#7f85c1]/10 transition-colors"
       onClick={(event) => {
         event.preventDefault();
         stop();
@@ -167,7 +168,7 @@ function PureSendButton({
       data-testid="send-button"
       variant="default"
       size="icon"
-      className="rounded-full p-1.5 h-8 w-8 bg-[#7f85c1] hover:bg-[#6c72a6] shadow-[0_0_10px_rgba(127,133,193,0.2)] transition-all duration-200"
+      className="rounded-full p-1.5 h-8 w-8 bg-[#7f85c1] hover:bg-[#6c72a6] shadow-sm shadow-[#7f85c1]/20 transition-all duration-200 disabled:opacity-25 disabled:shadow-none"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
