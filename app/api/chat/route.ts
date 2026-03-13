@@ -17,6 +17,45 @@ function extractUserText(msg: UIMessage): string {
   return '';
 }
 
+/**
+ * Build a RAG search query augmented with conversation history.
+ * Uses the last 2 previous user messages for context when available.
+ */
+function buildAugmentedQuery(currentQuery: string, messages: UIMessage[]): string {
+  const previousUserTexts = messages
+    .filter(m => m.role === 'user')
+    .slice(0, -1) // exclude current
+    .map(m => extractUserText(m))
+    .filter(Boolean)
+    .slice(-2); // last 2 previous user messages
+
+  if (previousUserTexts.length === 0) return currentQuery;
+  return `${previousUserTexts.join(' ')} ${currentQuery}`;
+}
+
+/**
+ * Try RAG search with current query, then retry with history if no results.
+ */
+async function getContextWithFallback(
+  currentQuery: string,
+  filters: Record<string, unknown>,
+  messages: UIMessage[],
+  queryType: string
+): Promise<string> {
+  // Try with current query first
+  let context = await getContext(currentQuery, filters, undefined, { queryType });
+  if (context) return context;
+
+  // No results — retry with conversation history
+  const augmented = buildAugmentedQuery(currentQuery, messages);
+  if (augmented !== currentQuery) {
+    console.log(`[API] RAG retry with history: "${augmented.substring(0, 120)}"`);
+    context = await getContext(augmented, filters, undefined, { queryType: 'book_info' });
+  }
+
+  return context;
+}
+
 export async function POST(req: Request) {
   try {
     const { messages }: { messages: UIMessage[] } = await req.json();
@@ -60,7 +99,7 @@ export async function POST(req: Request) {
       console.log('[API] Using recommendation prompt (tool-driven)');
 
     } else if (type === 'comparison' && filters.titles && Array.isArray(filters.titles) && filters.titles.length === 2) {
-      contextUsed = await getContext(userQuery, filters, undefined, { queryType: type });
+      contextUsed = await getContextWithFallback(userQuery, filters, messagesWithIds, type);
       promptMessages = [
         { role: 'system', content: comparisonPrompt(contextUsed) },
         ...nonSystemMessages,
@@ -78,20 +117,10 @@ export async function POST(req: Request) {
         ];
         console.log(`[API] Follow-up using cached context for: ${cached.title || 'previous topic'}`);
       } else {
-        // No cache (serverless lost it) — reconstruct topic from conversation history
-        const previousUserTexts = messagesWithIds
-          .filter(m => m.role === 'user')
-          .slice(0, -1)
-          .map(m => extractUserText(m))
-          .filter(Boolean);
-
-        // Combine previous user messages with current query for better RAG search
-        const searchQuery = previousUserTexts.length > 0
-          ? `${previousUserTexts[previousUserTexts.length - 1]} ${userQuery}`
-          : userQuery;
-
-        console.log(`[API] Follow-up with no cache, searching with history: "${searchQuery.substring(0, 100)}"`);
-        contextUsed = await getContext(searchQuery, filters, undefined, { queryType: 'book_info' });
+        // No cache (serverless lost it) — use history-augmented RAG
+        const augmented = buildAugmentedQuery(userQuery, messagesWithIds);
+        console.log(`[API] Follow-up with no cache, searching: "${augmented.substring(0, 120)}"`);
+        contextUsed = await getContext(augmented, filters, undefined, { queryType: 'book_info' });
         if (contextUsed) {
           contextCache.set(chatId, { title: filters.title as string | undefined, context: contextUsed });
           promptMessages = [
@@ -107,7 +136,7 @@ export async function POST(req: Request) {
       }
 
     } else if (type === 'book_info') {
-      contextUsed = await getContext(userQuery, filters, undefined, { queryType: type });
+      contextUsed = await getContextWithFallback(userQuery, filters, messagesWithIds, type);
       promptMessages = [
         { role: 'system', content: systemPromptWithContext(contextUsed) },
         ...nonSystemMessages,
@@ -135,7 +164,7 @@ export async function POST(req: Request) {
 
     } else {
       // General, author_info, review_analysis
-      contextUsed = await getContext(userQuery, filters, undefined, { queryType: type });
+      contextUsed = await getContextWithFallback(userQuery, filters, messagesWithIds, type);
 
       if (contextUsed) {
         contextCache.set(chatId, { title: filters.title as string | undefined, context: contextUsed });
