@@ -68,14 +68,32 @@ export async function POST(req: Request) {
       console.log(`[API] Comparing: ${(filters.titles as string[]).join(' vs ')}`);
       contextCache.set(chatId, { title: (filters.titles as string[]).join(', '), context: contextUsed });
 
-    } else if (type === 'follow_up' && contextCache.has(chatId)) {
-      const cached = contextCache.get(chatId)!;
-      contextUsed = cached.context;
-      promptMessages = [
-        { role: 'system', content: followUpPrompt(contextUsed) },
-        ...nonSystemMessages,
-      ];
-      console.log(`[API] Follow-up using cached context for: ${cached.title || 'previous topic'}`);
+    } else if (type === 'follow_up') {
+      if (contextCache.has(chatId)) {
+        const cached = contextCache.get(chatId)!;
+        contextUsed = cached.context;
+        promptMessages = [
+          { role: 'system', content: followUpPrompt(contextUsed) },
+          ...nonSystemMessages,
+        ];
+        console.log(`[API] Follow-up using cached context for: ${cached.title || 'previous topic'}`);
+      } else {
+        // No cache (serverless lost it, or recommendation didn't cache) — do fresh RAG search
+        console.log('[API] Follow-up with no cache, falling back to RAG search');
+        contextUsed = await getContext(userQuery, filters, undefined, { queryType: 'book_info' });
+        if (contextUsed) {
+          contextCache.set(chatId, { title: filters.title as string | undefined, context: contextUsed });
+          promptMessages = [
+            { role: 'system', content: systemPromptWithContext(contextUsed) },
+            ...nonSystemMessages,
+          ];
+        } else {
+          promptMessages = [
+            { role: 'system', content: baseSystemPrompt },
+            ...nonSystemMessages,
+          ];
+        }
+      }
 
     } else if (type === 'book_info') {
       contextUsed = await getContext(userQuery, filters, undefined, { queryType: type });

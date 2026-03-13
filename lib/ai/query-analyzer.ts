@@ -44,12 +44,17 @@ Given the user query, analyze it and return a JSON object with the following str
   }
 }
 
+IMPORTANT: Only use "follow_up" when the query is truly ambiguous with NO identifiable book title or author (e.g., "tell me more", "what about the second one?", "can you elaborate?"). If the user mentions a book title — even casually or with typos — always extract it and use "book_info" or "review_analysis" instead.
+
 Examples:
 1. "Recommend me some medieval romance books" → {"type":"recommendation","filters":{"subgenre":"medieval"}}
 2. "Tell me about The Velvet Bond by Catherine Archer" → {"type":"book_info","filters":{"title":"The Velvet Bond","author":"Catherine Archer"}}
 3. "Compare Pride and Prejudice with Persuasion" → {"type":"comparison","filters":{"titles":["Pride and Prejudice","Persuasion"]}}
 4. "Are there any good enemies to lovers romances?" → {"type":"recommendation","filters":{"tags":["enemies to lovers"]}}
 5. "Can you analyze the review for Black Tree Moon?" → {"type":"review_analysis","filters":{"title":"Black Tree Moon"}}
+6. "my love my enemy, what did readers think?" → {"type":"review_analysis","filters":{"title":"My Love, My Enemy"}}
+7. "what about Devil in Winter?" → {"type":"book_info","filters":{"title":"Devil in Winter"}}
+8. "tell me more about it" → {"type":"follow_up","filters":{}}
 
 Return ONLY the JSON object, no additional text.`;
 
