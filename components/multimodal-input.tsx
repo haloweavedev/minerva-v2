@@ -168,7 +168,7 @@ function PureSendButton({
       data-testid="send-button"
       variant="default"
       size="icon"
-      className="rounded-full p-1.5 h-8 w-8 bg-[#7f85c1] hover:bg-[#6c72a6] shadow-sm shadow-[#7f85c1]/20 transition-all duration-200 disabled:opacity-25 disabled:shadow-none"
+      className="rounded-full p-1.5 h-8 w-8 bg-[#7f85c1] hover:bg-[#6c72a6] text-white shadow-sm shadow-[#7f85c1]/20 transition-all duration-200 disabled:opacity-25 disabled:shadow-none"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
