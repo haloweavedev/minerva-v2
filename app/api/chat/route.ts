@@ -34,26 +34,26 @@ function buildAugmentedQuery(currentQuery: string, messages: UIMessage[]): strin
 }
 
 /**
- * Try RAG search with current query, then retry with history if no results.
+ * RAG search that uses conversation history for multi-turn queries.
+ * For first messages, searches with just the current query.
+ * For follow-ups, uses the augmented query (history + current) as primary search.
  */
-async function getContextWithFallback(
+async function getContextWithHistory(
   currentQuery: string,
   filters: Record<string, unknown>,
   messages: UIMessage[],
   queryType: string
 ): Promise<string> {
-  // Try with current query first
-  let context = await getContext(currentQuery, filters, undefined, { queryType });
-  if (context) return context;
-
-  // No results — retry with conversation history
   const augmented = buildAugmentedQuery(currentQuery, messages);
-  if (augmented !== currentQuery) {
-    console.log(`[API] RAG retry with history: "${augmented.substring(0, 120)}"`);
-    context = await getContext(augmented, filters, undefined, { queryType: 'book_info' });
+  const isMultiTurn = augmented !== currentQuery;
+
+  if (isMultiTurn) {
+    // Multi-turn: search with history-augmented query for better context
+    console.log(`[API] Multi-turn RAG: "${augmented.substring(0, 120)}"`);
+    return await getContext(augmented, filters, undefined, { queryType: 'book_info' });
   }
 
-  return context;
+  return await getContext(currentQuery, filters, undefined, { queryType });
 }
 
 export async function POST(req: Request) {
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
       console.log('[API] Using recommendation prompt (tool-driven)');
 
     } else if (type === 'comparison' && filters.titles && Array.isArray(filters.titles) && filters.titles.length === 2) {
-      contextUsed = await getContextWithFallback(userQuery, filters, messagesWithIds, type);
+      contextUsed = await getContextWithHistory(userQuery, filters, messagesWithIds, type);
       promptMessages = [
         { role: 'system', content: comparisonPrompt(contextUsed) },
         ...nonSystemMessages,
@@ -136,7 +136,7 @@ export async function POST(req: Request) {
       }
 
     } else if (type === 'book_info') {
-      contextUsed = await getContextWithFallback(userQuery, filters, messagesWithIds, type);
+      contextUsed = await getContextWithHistory(userQuery, filters, messagesWithIds, type);
       promptMessages = [
         { role: 'system', content: systemPromptWithContext(contextUsed) },
         ...nonSystemMessages,
@@ -164,7 +164,7 @@ export async function POST(req: Request) {
 
     } else {
       // General, author_info, review_analysis
-      contextUsed = await getContextWithFallback(userQuery, filters, messagesWithIds, type);
+      contextUsed = await getContextWithHistory(userQuery, filters, messagesWithIds, type);
 
       if (contextUsed) {
         contextCache.set(chatId, { title: filters.title as string | undefined, context: contextUsed });
