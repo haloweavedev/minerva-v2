@@ -186,4 +186,47 @@ export async function insertChunk(
   `;
 }
 
+/**
+ * Search for similar chunks with a date range filter on post_date.
+ * Uses SQL-level WHERE clause so pgvector only ranks matching reviews.
+ */
+export async function searchSimilarChunksWithDateFilter(
+  embedding: number[],
+  dateFrom: string,
+  dateTo: string,
+  limit = 40
+): Promise<ChunkSearchResult[]> {
+  const vectorStr = `[${embedding.join(',')}]`;
+
+  await sql`SET LOCAL hnsw.ef_search = 100`;
+
+  const rows = await sql`
+    SELECT
+      c.id AS chunk_id,
+      c.review_id,
+      c.chunk_index,
+      c.content,
+      1 - (c.embedding <=> ${vectorStr}::vector) AS similarity,
+      r.title,
+      r.author_name,
+      r.grade,
+      r.sensuality,
+      r.book_types,
+      r.review_tags,
+      r.cover_url,
+      r.review_url,
+      r.asin,
+      r.post_id,
+      r.post_date,
+      r.publish_date
+    FROM book_review_chunks c
+    JOIN book_reviews r ON r.id = c.review_id
+    WHERE r.post_date >= ${dateFrom}::date AND r.post_date < ${dateTo}::date
+    ORDER BY c.embedding <=> ${vectorStr}::vector
+    LIMIT ${limit}
+  `;
+
+  return rows as unknown as ChunkSearchResult[];
+}
+
 export { sql };

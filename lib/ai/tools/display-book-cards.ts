@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { BookListSchema, RecommendationQuerySchema } from '../schemas';
 import type { Book } from '../schemas';
 import { embedQuery, rerankDocuments } from '@/lib/voyage';
-import { searchSimilarChunks, findReviewByTitleAuthor } from '@/lib/db';
+import { searchSimilarChunks, searchSimilarChunksWithDateFilter, findReviewByTitleAuthor } from '@/lib/db';
 
 const DisplayBookCardsSchema = RecommendationQuerySchema.extend({
   specificTitles: z.array(z.string()).optional().describe("List of specific book titles to display (used for comparisons)")
@@ -12,8 +12,8 @@ const DisplayBookCardsSchema = RecommendationQuerySchema.extend({
 export const displayBookCards = tool({
   description: 'Recommend romance novels based on the user\'s request or display specific books for comparison. Use this tool whenever the user asks for book recommendations or similar books, or to compare specific books.',
   inputSchema: DisplayBookCardsSchema,
-  execute: async ({ grade, subgenre, similarTo, keywords, tags, specificTitles, sensuality, bookTypes }) => {
-    console.log('[Tool: displayBookCards] Params:', { grade, subgenre, similarTo, keywords, tags, specificTitles, sensuality, bookTypes });
+  execute: async ({ grade, subgenre, similarTo, keywords, tags, specificTitles, sensuality, bookTypes, reviewedAfter, reviewedBefore }) => {
+    console.log('[Tool: displayBookCards] Params:', { grade, subgenre, similarTo, keywords, tags, specificTitles, sensuality, bookTypes, reviewedAfter, reviewedBefore });
 
     // --- Handle specific book title display ---
     if (specificTitles && specificTitles.length > 0) {
@@ -64,9 +64,12 @@ export const displayBookCards = tool({
 
     console.log(`[Tool: displayBookCards] Search query: "${searchQuery}"`);
 
-    // Embed & search pgvector
+    // Embed & search pgvector (use date-filtered query when dates provided)
     const embedding = await embedQuery(searchQuery.trim());
-    const chunks = await searchSimilarChunks(embedding, 30);
+    const hasDateFilter = reviewedAfter && reviewedBefore;
+    const chunks = hasDateFilter
+      ? await searchSimilarChunksWithDateFilter(embedding, reviewedAfter, reviewedBefore, 40)
+      : await searchSimilarChunks(embedding, 30);
 
     if (chunks.length === 0) {
       console.log('[Tool: displayBookCards] No results found');

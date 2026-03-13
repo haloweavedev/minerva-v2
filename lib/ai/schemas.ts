@@ -34,7 +34,9 @@ export const RecommendationQuerySchema = z.object({
   keywords: z.string().optional().describe("General keywords or criteria for the recommendations"),
   tags: z.array(z.string()).optional().describe("Specific romance tropes or themes to filter by"),
   sensuality: z.string().optional().describe("Desired sensuality level, e.g., 'Kisses', 'Subtle', 'Warm', 'Hot'"),
-  bookTypes: z.union([z.string(), z.array(z.string())]).optional().describe("Desired book type(s), e.g., 'Regency Romance', 'Contemporary Romance'")
+  bookTypes: z.union([z.string(), z.array(z.string())]).optional().describe("Desired book type(s), e.g., 'Regency Romance', 'Contemporary Romance'"),
+  reviewedAfter: z.string().optional().describe("ISO date string — only include reviews posted on or after this date (e.g., '2025-12-01' for December 2025)"),
+  reviewedBefore: z.string().optional().describe("ISO date string — only include reviews posted before this date (e.g., '2026-01-01' for up to end of December 2025)")
 });
 
 // Type exports for TypeScript
