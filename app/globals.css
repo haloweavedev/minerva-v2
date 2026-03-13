@@ -135,19 +135,13 @@ code, pre {
   margin: 5px 0 0 0 !important;
 }
 
-/* Scrollbar styling */
+/* Hide scrollbar completely */
+.chat-messages-main {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
 .chat-messages-main::-webkit-scrollbar {
-  width: 4px;
-}
-.chat-messages-main::-webkit-scrollbar-track {
-  background: transparent;
-}
-.chat-messages-main::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.12);
-  border-radius: 999px;
-}
-.chat-messages-main::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary) / 0.25);
+  display: none; /* Chrome/Safari */
 }
 
 /* Subtle noise texture overlay for depth */

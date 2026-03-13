@@ -45,13 +45,12 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
           )}
         >
           {message.role === 'assistant' && (
-            <div className="size-7 flex items-center rounded-full justify-center shrink-0 mt-0.5 bg-white/60 dark:bg-white/10 backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-sm">
+            <div className="size-7 flex items-center justify-center shrink-0 mt-0.5">
               <Image
                 src="/minerva-logo.svg"
                 alt=""
-                width={15}
-                height={15}
-                className="opacity-70"
+                width={18}
+                height={18}
               />
             </div>
           )}
@@ -139,13 +138,12 @@ export const ThinkingMessage = () => {
       animate={{ y: 0, opacity: 1 }}
     >
       <div className="flex gap-3.5">
-        <div className="size-7 flex items-center rounded-full justify-center shrink-0 mt-0.5 bg-white/60 dark:bg-white/10 backdrop-blur-sm border border-white/40 dark:border-white/10 shadow-sm">
+        <div className="size-7 flex items-center justify-center shrink-0 mt-0.5">
           <Image
             src="/minerva-logo.svg"
             alt=""
-            width={15}
-            height={15}
-            className="opacity-70"
+            width={18}
+            height={18}
           />
         </div>
         <div className="flex items-center gap-1.5 py-2">
