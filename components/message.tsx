@@ -1,6 +1,7 @@
 'use client';
 
 import type { UIMessage } from 'ai';
+import { isToolUIPart, getToolName } from 'ai';
 import { AnimatePresence, motion } from 'framer-motion';
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
@@ -12,18 +13,6 @@ import Image from 'next/image';
 interface PurePreviewMessageProps {
   message: UIMessage;
   isLoading?: boolean;
-}
-
-interface ExpectedToolInvocationPart {
-  type: 'tool-invocation';
-  toolInvocation: {
-    state: string;
-    step: number;
-    toolCallId: string;
-    toolName: string;
-    args: unknown;
-    result?: unknown;
-  };
 }
 
 const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
@@ -76,46 +65,72 @@ const PurePreviewMessage = ({ message }: PurePreviewMessageProps) => {
                 );
               }
 
-              if (part.type === 'tool-invocation') {
-                const toolPart = part as unknown as ExpectedToolInvocationPart;
-                const { toolInvocation } = toolPart;
+              if (isToolUIPart(part)) {
+                const toolName = getToolName(part);
+                const toolPart = part as Record<string, unknown>;
 
-                if (toolInvocation?.toolName === 'displayBookCards') {
-                  try {
-                    const books = toolInvocation.result as unknown[];
+                if (toolName === 'displayBookCards') {
+                  // Show loading while tool is executing
+                  if (toolPart.state === 'input-streaming' || toolPart.state === 'input-available') {
+                    return (
+                      <div key={baseKey} className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+                        <motion.div
+                          className="size-1.5 rounded-full bg-[#7f85c1]/40"
+                          animate={{ opacity: [0.25, 0.9, 0.25] }}
+                          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                        Finding books...
+                      </div>
+                    );
+                  }
 
-                    if (Array.isArray(books) && books.length > 0) {
-                      const parseResult = BookListSchema.safeParse(books);
+                  if (toolPart.state === 'output-available') {
+                    try {
+                      const books = toolPart.output as unknown[];
 
-                      if (!parseResult.success || parseResult.data.length === 0) {
+                      if (Array.isArray(books) && books.length > 0) {
+                        const parseResult = BookListSchema.safeParse(books);
+
+                        if (!parseResult.success || parseResult.data.length === 0) {
+                          return (
+                            <div key={baseKey} className="text-muted-foreground text-sm italic mt-1">
+                              No book recommendations found matching your criteria.
+                            </div>
+                          );
+                        }
+
                         return (
-                          <div key={baseKey} className="text-muted-foreground text-sm italic mt-1">
-                            No book recommendations found matching your criteria.
-                          </div>
+                          <motion.div
+                            key={baseKey}
+                            className="mt-2 w-full"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
+                          >
+                            <BookGrid books={parseResult.data} />
+                          </motion.div>
                         );
                       }
-
+                    } catch (error) {
+                      console.error('[UI] Error processing book cards:', error);
                       return (
-                        <motion.div
-                          key={baseKey}
-                          className="mt-2 w-full"
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
-                        >
-                          <BookGrid books={parseResult.data} />
-                        </motion.div>
+                        <div key={baseKey} className="text-muted-foreground text-sm italic mt-1">
+                          Error displaying book recommendations.
+                        </div>
                       );
                     }
-                  } catch (error) {
-                    console.error('[UI] Error processing book cards:', error);
+                  }
+
+                  if (toolPart.state === 'output-error') {
                     return (
                       <div key={baseKey} className="text-muted-foreground text-sm italic mt-1">
-                        Error displaying book recommendations.
+                        Error loading book recommendations.
                       </div>
                     );
                   }
                 }
+
+                return null;
               }
 
               return null;
