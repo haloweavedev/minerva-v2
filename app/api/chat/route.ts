@@ -17,26 +17,12 @@ function extractUserText(msg: UIMessage): string {
   return '';
 }
 
-/**
- * Build a RAG search query augmented with conversation history.
- * Uses the last 2 previous user messages for context when available.
- */
-function buildAugmentedQuery(currentQuery: string, messages: UIMessage[]): string {
-  const previousUserTexts = messages
-    .filter(m => m.role === 'user')
-    .slice(0, -1) // exclude current
-    .map(m => extractUserText(m))
-    .filter(Boolean)
-    .slice(-2); // last 2 previous user messages
-
-  if (previousUserTexts.length === 0) return currentQuery;
-  return `${previousUserTexts.join(' ')} ${currentQuery}`;
-}
 
 /**
  * RAG search that uses conversation history for multi-turn queries.
  * For first messages, searches with just the current query.
- * For follow-ups, uses the augmented query (history + current) as primary search.
+ * For multi-turn, re-uses the most recent substantive previous user query
+ * to ensure the RAG finds the same context the conversation is about.
  */
 async function getContextWithHistory(
   currentQuery: string,
@@ -44,16 +30,19 @@ async function getContextWithHistory(
   messages: UIMessage[],
   queryType: string
 ): Promise<string> {
-  const augmented = buildAugmentedQuery(currentQuery, messages);
-  const isMultiTurn = augmented !== currentQuery;
+  const previousUserTexts = messages
+    .filter(m => m.role === 'user')
+    .slice(0, -1)
+    .map(m => extractUserText(m))
+    .filter(t => t.length > 10); // skip very short messages
 
-  if (isMultiTurn) {
-    // Multi-turn: search with history-augmented query for better context.
-    // Clear title/author filters so getContext uses the augmented query
-    // for embedding instead of a potentially wrong title extracted from
-    // the current message alone.
-    console.log(`[API] Multi-turn RAG: "${augmented.substring(0, 120)}"`);
-    return await getContext(augmented, {}, undefined, { queryType: 'book_info' });
+  if (previousUserTexts.length > 0) {
+    // Use the most recent substantive previous message as the RAG query.
+    // This ensures we find the same context the conversation is about,
+    // rather than diluting the embedding with the current follow-up text.
+    const prevQuery = previousUserTexts[previousUserTexts.length - 1];
+    console.log(`[API] Multi-turn RAG using prev message: "${prevQuery.substring(0, 100)}"`);
+    return await getContext(prevQuery, {}, undefined, { queryType: 'book_info' });
   }
 
   return await getContext(currentQuery, filters, undefined, { queryType });
@@ -120,10 +109,17 @@ export async function POST(req: Request) {
         ];
         console.log(`[API] Follow-up using cached context for: ${cached.title || 'previous topic'}`);
       } else {
-        // No cache (serverless lost it) — use history-augmented RAG
-        const augmented = buildAugmentedQuery(userQuery, messagesWithIds);
-        console.log(`[API] Follow-up with no cache, searching: "${augmented.substring(0, 120)}"`);
-        contextUsed = await getContext(augmented, {}, undefined, { queryType: 'book_info' });
+        // No cache (serverless lost it) — re-use previous user message for RAG
+        const prevUserTexts = messagesWithIds
+          .filter(m => m.role === 'user')
+          .slice(0, -1)
+          .map(m => extractUserText(m))
+          .filter(t => t.length > 10);
+        const searchQuery = prevUserTexts.length > 0
+          ? prevUserTexts[prevUserTexts.length - 1]
+          : userQuery;
+        console.log(`[API] Follow-up with no cache, searching: "${searchQuery.substring(0, 100)}"`);
+        contextUsed = await getContext(searchQuery, {}, undefined, { queryType: 'book_info' });
         if (contextUsed) {
           contextCache.set(chatId, { title: filters.title as string | undefined, context: contextUsed });
           promptMessages = [
