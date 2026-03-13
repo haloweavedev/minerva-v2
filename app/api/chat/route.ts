@@ -48,9 +48,12 @@ async function getContextWithHistory(
   const isMultiTurn = augmented !== currentQuery;
 
   if (isMultiTurn) {
-    // Multi-turn: search with history-augmented query for better context
+    // Multi-turn: search with history-augmented query for better context.
+    // Clear title/author filters so getContext uses the augmented query
+    // for embedding instead of a potentially wrong title extracted from
+    // the current message alone.
     console.log(`[API] Multi-turn RAG: "${augmented.substring(0, 120)}"`);
-    return await getContext(augmented, filters, undefined, { queryType: 'book_info' });
+    return await getContext(augmented, {}, undefined, { queryType: 'book_info' });
   }
 
   return await getContext(currentQuery, filters, undefined, { queryType });
@@ -120,7 +123,7 @@ export async function POST(req: Request) {
         // No cache (serverless lost it) — use history-augmented RAG
         const augmented = buildAugmentedQuery(userQuery, messagesWithIds);
         console.log(`[API] Follow-up with no cache, searching: "${augmented.substring(0, 120)}"`);
-        contextUsed = await getContext(augmented, filters, undefined, { queryType: 'book_info' });
+        contextUsed = await getContext(augmented, {}, undefined, { queryType: 'book_info' });
         if (contextUsed) {
           contextCache.set(chatId, { title: filters.title as string | undefined, context: contextUsed });
           promptMessages = [
