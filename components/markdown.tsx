@@ -91,6 +91,43 @@ const components: Partial<Components> = {
       </h6>
     );
   },
+  table: ({ children, ...props }) => {
+    return (
+      <div className="overflow-x-auto my-3 rounded-xl border border-white/30 dark:border-white/10 bg-white/30 dark:bg-white/5 backdrop-blur-sm" {...props}>
+        <table className="w-full text-[13px]">
+          {children}
+        </table>
+      </div>
+    );
+  },
+  thead: ({ children, ...props }) => {
+    return (
+      <thead className="border-b border-[#7f85c1]/15 dark:border-[#7f85c1]/20" {...props}>
+        {children}
+      </thead>
+    );
+  },
+  th: ({ children, ...props }) => {
+    return (
+      <th className="px-4 py-2.5 text-left text-[12px] font-semibold text-[#7f85c1] uppercase tracking-wider" {...props}>
+        {children}
+      </th>
+    );
+  },
+  td: ({ children, ...props }) => {
+    return (
+      <td className="px-4 py-2.5 text-foreground/80" {...props}>
+        {children}
+      </td>
+    );
+  },
+  tr: ({ children, ...props }) => {
+    return (
+      <tr className="border-b border-white/20 dark:border-white/5 last:border-0" {...props}>
+        {children}
+      </tr>
+    );
+  },
 };
 
 const remarkPlugins = [remarkGfm];

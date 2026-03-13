@@ -33,7 +33,7 @@ export function Chat() {
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Messages
           status={status}
           messages={messages}
