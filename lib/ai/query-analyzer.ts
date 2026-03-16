@@ -31,7 +31,7 @@ Given the user query, analyze it and return a JSON object with the following str
 {
   "type": one of "recommendation", "book_info", "author_info", "comparison", "general", "follow_up", "review_analysis",
   "filters": {
-    "grade": optional letter grade filter like "A+" or "B",
+    "grade": optional grade filter — use "highly_rated" for best/top/highest rated, "A_range" for A-grade, "B_range" for B-grade, or a specific grade like "A+",
     "subgenre": optional subgenre like "medieval", "regency", "contemporary",
     "similarTo": optional title of a book the user likes,
     "tags": optional array of tropes or themes like ["arranged marriage", "enemies to lovers"],
@@ -55,6 +55,10 @@ Examples:
 6. "my love my enemy, what did readers think?" → {"type":"review_analysis","filters":{"title":"My Love, My Enemy"}}
 7. "what about Devil in Winter?" → {"type":"book_info","filters":{"title":"Devil in Winter"}}
 8. "tell me more about it" → {"type":"follow_up","filters":{}}
+9. "Show me the highest rated books" → {"type":"recommendation","filters":{"grade":"highly_rated"}}
+10. "Best reviewed medieval romances" → {"type":"recommendation","filters":{"grade":"highly_rated","subgenre":"medieval"}}
+11. "Top picks for enemies to lovers" → {"type":"recommendation","filters":{"grade":"highly_rated","tags":["enemies to lovers"]}}
+12. "Give me A-graded regency romances" → {"type":"recommendation","filters":{"grade":"A_range","subgenre":"regency"}}
 
 Return ONLY the JSON object, no additional text.`;
 

@@ -42,6 +42,13 @@ No test framework is configured.
 - `follow_up` — uses cached context from previous turn (in-memory `Map<chatId, context>`)
 - Others — generic `systemPromptWithContext()`
 
+**Multi-turn context handling** (spans `route.ts` + `getContext.ts`):
+- In-memory `Map<chatId, { title?, context }>` caches RAG context per conversation
+- Serverless cold starts can lose this cache, so a fallback re-retrieves context using the most recent substantive previous user message (length > 10 chars) rather than the current follow-up query — this prevents follow-up text like "tell me more" from diluting embeddings
+- History-augmented retrieval always uses `queryType: 'book_info'` to stay focused on the original topic
+
+**Streaming with tools pattern:** `stopWhen: stepCountIs(2)` allows the LLM to invoke `displayBookCards` and then generate a text response in the same stream. Without this, the stream would end after the tool call.
+
 **RAG pipeline** (`utils/getContext.ts`):
 - Embedding: Voyage AI `voyage-3.5` (512 dimensions)
 - Vector search: Neon pgvector cosine similarity (`<=>` operator) → top 40, `ef_search=100`
@@ -52,7 +59,11 @@ No test framework is configured.
 
 **Tool system** — single tool `displayBookCards` with two modes:
 1. **Specific titles:** Lookup via `findReviewByTitleAuthor()` in pgvector DB, fallback to vector search
-2. **Recommendations:** Full filtering pipeline — subgenre normalization, sensuality mapping, grade filtering, Voyage reranking (0.3 relevance floor), returns up to 6 books
+2. **Recommendations:** Full filtering pipeline — subgenre normalization (e.g., "regency" → "Regency Romance"), sensuality mapping via regex (e.g., "closed door" → "Kisses", "steamy" → "Hot"), grade filtering, Voyage reranking (0.3 relevance floor), returns up to 6 books
+
+**RAG relevance thresholds** — two different floors tuned for different use cases:
+- General RAG retrieval: 0.45 (strict, ensures high-quality context for answering questions)
+- Recommendation tool: 0.3 (lenient, allows broader discovery for suggestions)
 
 **Database layer** (`lib/db.ts`): Neon serverless SQL client with pgvector. Key functions: `searchSimilarChunks()`, `findReviewByTitleAuthor()`, `searchByTitle()`, `getReviewById()`
 
@@ -74,7 +85,7 @@ No test framework is configured.
 - `utils/getContext.ts` — RAG retrieval with embeddings, reranking, and context formatting
 - `components/` — React UI; `chat.tsx` is the main orchestrator, `book-card.tsx`/`book-grid.tsx` for results
 - `components/ui/` — Shadcn/ui primitives (button, textarea, tooltip, sonner)
-- `scripts/` — utility scripts for data inspection (run with `tsx`)
+- `scripts/` — utility scripts for data inspection and ingestion (run with `tsx`, e.g., `npx tsx scripts/test-rag-quality.ts`)
 
 ## Environment
 
@@ -102,3 +113,7 @@ Always consult the skills in `.agents/skills/` when writing or modifying code. T
 - Remote images allowed only from `allaboutromance.com`
 - Groq-specific provider option: `reasoningFormat: 'hidden'` passed when using Groq
 - Framer Motion used for message and book grid animations
+- Glass-morphism design: `bg-white/55 dark:bg-white/5 backdrop-blur-sm` pattern throughout UI
+- Custom brand colors: `blob-purple: #7F85C1`, `blob-pink: #FF66C4` (defined in `tailwind.config.ts`)
+- Grade badge colors: A→green, B→purple, C→amber, D→red (in `book-card.tsx`)
+- Markdown rendering via `react-markdown` with `remark-gfm` and `remark-math` plugins

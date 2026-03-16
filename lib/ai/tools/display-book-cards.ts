@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { BookListSchema, RecommendationQuerySchema } from '../schemas';
 import type { Book } from '../schemas';
 import { embedQuery, rerankDocuments } from '@/lib/voyage';
-import { searchSimilarChunks, searchSimilarChunksWithDateFilter, findReviewByTitleAuthor } from '@/lib/db';
+import { searchSimilarChunks, searchSimilarChunksWithGradeFilter, searchSimilarChunksWithDateFilter, findReviewByTitleAuthor } from '@/lib/db';
+import { expandGradeRange, gradeToNumeric } from '@/lib/grades';
 
 const DisplayBookCardsSchema = RecommendationQuerySchema.extend({
   specificTitles: z.array(z.string()).optional().describe("List of specific book titles to display (used for comparisons)")
@@ -44,6 +45,10 @@ export const displayBookCards = tool({
     }
 
     // --- Recommendation flow ---
+    // Expand grade range for SQL-level filtering
+    const expandedGrades = grade ? expandGradeRange(grade) : [];
+    const hasGradeFilter = expandedGrades.length > 0;
+
     // Build semantic search query
     let searchQuery = '';
     if (similarTo) {
@@ -59,20 +64,20 @@ export const displayBookCards = tool({
       searchQuery += ` ${bookTypes}`;
     }
     if (sensuality) searchQuery += ` sensuality:${mapSensuality(sensuality)}`;
-    if (grade && !searchQuery) searchQuery = `top rated ${grade} romance books`;
     if (!searchQuery) searchQuery = 'romance books';
 
-    console.log(`[Tool: displayBookCards] Search query: "${searchQuery}"`);
+    console.log(`[Tool: displayBookCards] Search query: "${searchQuery}", grade filter: ${hasGradeFilter ? expandedGrades.join(',') : 'none'}`);
 
-    // Embed & search pgvector (use date-filtered query when dates provided)
+    // Embed & search pgvector with grade filtering at SQL level
     const embedding = await embedQuery(searchQuery.trim());
-    const hasDateFilter = reviewedAfter && reviewedBefore;
-    const chunks = hasDateFilter
-      ? await searchSimilarChunksWithDateFilter(embedding, reviewedAfter, reviewedBefore, 40)
-      : await searchSimilarChunks(embedding, 30);
+    const chunks = hasGradeFilter
+      ? await searchSimilarChunksWithGradeFilter(embedding, expandedGrades, reviewedAfter, reviewedBefore, 40)
+      : reviewedAfter && reviewedBefore
+        ? await searchSimilarChunksWithDateFilter(embedding, reviewedAfter, reviewedBefore, 40)
+        : await searchSimilarChunks(embedding, 30);
 
     if (chunks.length === 0) {
-      console.log('[Tool: displayBookCards] No results found');
+      console.log(`[Tool: displayBookCards] No results found${hasGradeFilter ? ` for grades: ${expandedGrades.join(', ')}` : ''}`);
       return BookListSchema.parse([]);
     }
 
@@ -84,12 +89,9 @@ export const displayBookCards = tool({
       return true;
     });
 
-    // Apply grade filter if specified
+    // No silent fallback — if grade filter returned results, they already match.
+    // If no results, we return empty and let the LLM tell the user honestly.
     let filtered = uniqueChunks;
-    if (grade) {
-      filtered = uniqueChunks.filter((c) => c.grade?.toUpperCase() === grade.toUpperCase());
-      if (filtered.length === 0) filtered = uniqueChunks; // Fallback to all if no grade match
-    }
 
     // Exclude reference book for "similar to" queries
     if (similarTo) {
@@ -102,14 +104,22 @@ export const displayBookCards = tool({
     const documents = filtered.map((c) => c.content);
     const reranked = await rerankDocuments(searchQuery, documents, 8);
 
-    // Build book results from reranked
-    const books: Book[] = [];
+    // Build book results from reranked, then sort by grade (desc) as secondary sort
+    const candidates: { book: Book; relevance: number; gradeNum: number }[] = [];
     for (const result of reranked) {
       if (result.relevance_score < 0.3) continue;
       const chunk = filtered[result.index];
-      books.push(chunkToBook(chunk));
-      if (books.length >= 6) break;
+      candidates.push({
+        book: chunkToBook(chunk),
+        relevance: result.relevance_score,
+        gradeNum: gradeToNumeric(chunk.grade),
+      });
     }
+
+    // Sort: grade descending (best first), then relevance descending within same grade
+    candidates.sort((a, b) => b.gradeNum - a.gradeNum || b.relevance - a.relevance);
+
+    const books = candidates.slice(0, 6).map((c) => c.book);
 
     console.log(`[Tool: displayBookCards] Returning ${books.length} books`);
     return BookListSchema.parse(books);

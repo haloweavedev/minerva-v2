@@ -187,6 +187,84 @@ export async function insertChunk(
 }
 
 /**
+ * Search for similar chunks with a grade filter.
+ * Filters at SQL level so all returned chunks already match the grade requirement.
+ * Optionally also filters by date range.
+ */
+export async function searchSimilarChunksWithGradeFilter(
+  embedding: number[],
+  grades: string[],
+  dateFrom?: string,
+  dateTo?: string,
+  limit = 40
+): Promise<ChunkSearchResult[]> {
+  if (grades.length === 0) {
+    return searchSimilarChunks(embedding, limit);
+  }
+
+  const vectorStr = `[${embedding.join(',')}]`;
+
+  await sql`SET LOCAL hnsw.ef_search = 100`;
+
+  const hasDateFilter = dateFrom && dateTo;
+
+  const rows = hasDateFilter
+    ? await sql`
+      SELECT
+        c.id AS chunk_id,
+        c.review_id,
+        c.chunk_index,
+        c.content,
+        1 - (c.embedding <=> ${vectorStr}::vector) AS similarity,
+        r.title,
+        r.author_name,
+        r.grade,
+        r.sensuality,
+        r.book_types,
+        r.review_tags,
+        r.cover_url,
+        r.review_url,
+        r.asin,
+        r.post_id,
+        r.post_date,
+        r.publish_date
+      FROM book_review_chunks c
+      JOIN book_reviews r ON r.id = c.review_id
+      WHERE r.grade = ANY(${grades}::text[])
+        AND r.post_date >= ${dateFrom}::date AND r.post_date < ${dateTo}::date
+      ORDER BY c.embedding <=> ${vectorStr}::vector
+      LIMIT ${limit}
+    `
+    : await sql`
+      SELECT
+        c.id AS chunk_id,
+        c.review_id,
+        c.chunk_index,
+        c.content,
+        1 - (c.embedding <=> ${vectorStr}::vector) AS similarity,
+        r.title,
+        r.author_name,
+        r.grade,
+        r.sensuality,
+        r.book_types,
+        r.review_tags,
+        r.cover_url,
+        r.review_url,
+        r.asin,
+        r.post_id,
+        r.post_date,
+        r.publish_date
+      FROM book_review_chunks c
+      JOIN book_reviews r ON r.id = c.review_id
+      WHERE r.grade = ANY(${grades}::text[])
+      ORDER BY c.embedding <=> ${vectorStr}::vector
+      LIMIT ${limit}
+    `;
+
+  return rows as unknown as ChunkSearchResult[];
+}
+
+/**
  * Search for similar chunks with a date range filter on post_date.
  * Uses SQL-level WHERE clause so pgvector only ranks matching reviews.
  */

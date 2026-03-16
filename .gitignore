@@ -47,3 +47,6 @@ next-env.d.ts
 
 # data (extracted reviews)
 /data/
+
+# test results (logged per-run)
+/test-results/

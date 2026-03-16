@@ -28,7 +28,7 @@ export const bookCardArraySchema = BookListSchema;
 
 // Schema for detecting recommendation queries
 export const RecommendationQuerySchema = z.object({
-  grade: z.string().optional().describe("Filter by AAR grade (e.g. 'A+' or 'B')"),
+  grade: z.string().optional().describe("Filter by AAR grade. Use 'highly_rated' for A+/A/A-/B+, 'A_range' for A+/A/A-, 'B_range' for B+/B/B-, or a specific grade like 'A+'. Defaults to no filter."),
   subgenre: z.string().optional().describe("Filter by subgenre or setting (e.g. 'medieval', 'Regency')"),
   similarTo: z.string().optional().describe("A book title the user liked to find similar recommendations"),
   keywords: z.string().optional().describe("General keywords or criteria for the recommendations"),
